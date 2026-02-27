@@ -1,6 +1,6 @@
 import sqlite3
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 
@@ -28,6 +28,21 @@ class Job:
     def __post_init__(self):
         if not self.fetched_at:
             self.fetched_at = datetime.utcnow().isoformat()
+
+
+@dataclass
+class PipelineRun:
+    id: int | None = None
+    started_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    finished_at: str | None = None
+    source: str = ""
+    jobs_fetched: int = 0
+    jobs_new: int = 0
+    jobs_updated: int = 0
+    jobs_skipped: int = 0
+    jobs_failed: int = 0
+    status: str = "running"
+    error_msg: str | None = None
 
 
 @contextmanager
@@ -66,6 +81,21 @@ def init_db(db_path: str) -> None:
                 modifikations_timestamp TEXT,
                 source TEXT DEFAULT 'arbeitsagentur',
                 fetched_at TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                started_at TEXT NOT NULL,
+                finished_at TEXT,
+                source TEXT NOT NULL,
+                jobs_fetched INTEGER DEFAULT 0,
+                jobs_new INTEGER DEFAULT 0,
+                jobs_updated INTEGER DEFAULT 0,
+                jobs_skipped INTEGER DEFAULT 0,
+                jobs_failed INTEGER DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'running',
+                error_msg TEXT
             )
         """)
 
@@ -124,3 +154,56 @@ def update_job(db_path: str, job: Job) -> None:
                 fetched_at = :fetched_at
             WHERE refnr = :refnr
         """, job.__dict__)
+
+
+def insert_run(db_path: str, run: PipelineRun) -> int:
+    with get_connection(db_path) as conn:
+        cursor = conn.execute("""
+            INSERT INTO runs (
+                started_at, finished_at, source,
+                jobs_fetched, jobs_new, jobs_updated, jobs_skipped,
+                status, error_msg
+            ) VALUES (
+                :started_at, :finished_at, :source,
+                :jobs_fetched, :jobs_new, :jobs_updated, :jobs_skipped,
+                :status, :error_msg
+            )
+        """, run.__dict__)
+        return cursor.lastrowid
+
+
+def finish_run(
+    db_path: str,
+    run_id: int,
+    *,
+    jobs_fetched: int,
+    jobs_new: int,
+    jobs_updated: int,
+    jobs_skipped: int,
+    jobs_failed: int,
+    status: str,
+    error_msg: str | None = None,
+) -> None:
+    with get_connection(db_path) as conn:
+        conn.execute("""
+            UPDATE runs SET
+                finished_at = :finished_at,
+                jobs_fetched = :jobs_fetched,
+                jobs_new = :jobs_new,
+                jobs_updated = :jobs_updated,
+                jobs_skipped = :jobs_skipped,
+                jobs_failed = :jobs_failed,
+                status = :status,
+                error_msg = :error_msg
+            WHERE id = :id
+        """, {
+            "finished_at": datetime.utcnow().isoformat(),
+            "jobs_fetched": jobs_fetched,
+            "jobs_new": jobs_new,
+            "jobs_updated": jobs_updated,
+            "jobs_skipped": jobs_skipped,
+            "jobs_failed": jobs_failed,
+            "status": status,
+            "error_msg": error_msg,
+            "id": run_id,
+        })
