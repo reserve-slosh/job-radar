@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_job_list(config: ArbeitnowConfig) -> list[dict]:
     """Fetches and filters job listings from the Arbeitnow API."""
-    results: list[dict] = []
+    location_matched: list[dict] = []
 
     for page in range(1, config.max_pages + 1):
         jobs = _fetch_page(config.base_url, page)
@@ -22,11 +22,15 @@ def fetch_job_list(config: ArbeitnowConfig) -> list[dict]:
         for job in jobs:
             normalized = _normalize(job)
             if config.matches_location(normalized):
-                results.append(normalized)
+                location_matched.append(normalized)
 
         logger.info("Arbeitnow: Seite %d — %d Jobs geladen", page, len(jobs))
 
-    logger.info("Arbeitnow: %d Jobs nach Filter", len(results))
+    results = [job for job in location_matched if config.matches_title(job)]
+    dropped = len(location_matched) - len(results)
+    if dropped:
+        logger.info("Arbeitnow: %d Jobs durch Titel-Filter entfernt", dropped)
+    logger.info("Arbeitnow: %d Jobs nach allen Filtern", len(results))
     return results
 
 
