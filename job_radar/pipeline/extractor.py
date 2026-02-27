@@ -10,8 +10,9 @@ def build_job(raw: dict, source: str = "arbeitsagentur") -> Job | None:
     try:
         refnr = raw["refnr"]
         arbeitsort = raw.get("arbeitsort", {})
+        ort = arbeitsort.get("ort") or raw.get("ort", "")
 
-        raw_text = fetch_job_detail(refnr)
+        raw_text = raw.get("raw_text") or fetch_job_detail(refnr)
         if raw_text is None:
             logger.warning("Kein Detail-Text für %s", refnr)
 
@@ -19,7 +20,7 @@ def build_job(raw: dict, source: str = "arbeitsagentur") -> Job | None:
             refnr=refnr,
             titel=raw.get("titel", ""),
             arbeitgeber=raw.get("arbeitgeber", ""),
-            ort=arbeitsort.get("ort", ""),
+            ort=ort,
             eintrittsdatum=raw.get("eintrittsdatum"),
             veroeffentlicht_am=raw.get("aktuelleVeroeffentlichungsdatum"),
             raw_text=raw_text,

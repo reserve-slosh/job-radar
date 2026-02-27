@@ -211,3 +211,4 @@ CLAUDE.md
 
 # Pipeline logs
 logs/
+job_radar.db
