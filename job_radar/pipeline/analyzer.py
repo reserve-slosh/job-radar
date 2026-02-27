@@ -43,6 +43,8 @@ def analyze(text: str, api_key: str = "") -> dict:
             messages=[{"role": "user", "content": PROMPT_TEMPLATE.format(text=text)}],
         )
         raw = message.content[0].text
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
         return json.loads(raw)
     except Exception as e:
         logger.error("LLM-Analyse fehlgeschlagen: %s", e)
