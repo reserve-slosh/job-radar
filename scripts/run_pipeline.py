@@ -3,7 +3,10 @@ import logging.handlers
 import json
 from pathlib import Path
 from job_radar.config import Config, ArbeitnowConfig
-from job_radar.db.models import init_db, job_exists, insert_job, update_job, get_modifikations_timestamp
+from job_radar.db.models import (
+    init_db, job_exists, insert_job, update_job, get_modifikations_timestamp,
+    PipelineRun, insert_run, finish_run,
+)
 from job_radar.sources.arbeitsagentur import fetch_job_list as fetch_arbeitsagentur_jobs
 from job_radar.sources.arbeitnow import fetch_job_list as fetch_arbeitnow_jobs
 from job_radar.pipeline.extractor import build_job
@@ -82,28 +85,58 @@ def run():
     config = Config()
     init_db(config.db_path)
 
-    logger.info("=== Quelle: Arbeitsagentur ===")
-    aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt)
-    logger.info("%d Jobs gefunden", len(aa_jobs))
-    aa = _process_batch(aa_jobs, "arbeitsagentur", config)
+    run_id = insert_run(config.db_path, PipelineRun(source="all"))
 
-    logger.info("=== Quelle: Arbeitnow ===")
-    an_jobs = fetch_arbeitnow_jobs(config.arbeitnow)
-    logger.info("%d Jobs gefunden", len(an_jobs))
-    an = _process_batch(an_jobs, "arbeitnow", config)
+    try:
+        logger.info("=== Quelle: Arbeitsagentur ===")
+        aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt)
+        logger.info("%d Jobs gefunden", len(aa_jobs))
+        aa = _process_batch(aa_jobs, "arbeitsagentur", config)
 
-    logger.info(
-        "Fertig. Arbeitsagentur — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-        *aa,
-    )
-    logger.info(
-        "Fertig. Arbeitnow     — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-        *an,
-    )
-    logger.info(
-        "Fertig. Gesamt        — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-        *(x + y for x, y in zip(aa, an)),
-    )
+        logger.info("=== Quelle: Arbeitnow ===")
+        an_jobs = fetch_arbeitnow_jobs(config.arbeitnow)
+        logger.info("%d Jobs gefunden", len(an_jobs))
+        an = _process_batch(an_jobs, "arbeitnow", config)
+
+        logger.info(
+            "Fertig. Arbeitsagentur — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
+            *aa,
+        )
+        logger.info(
+            "Fertig. Arbeitnow     — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
+            *an,
+        )
+        logger.info(
+            "Fertig. Gesamt        — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
+            *(x + y for x, y in zip(aa, an)),
+        )
+
+        aa_new, aa_skipped, aa_reanalyzed, aa_failed = aa
+        an_new, an_skipped, an_reanalyzed, an_failed = an
+        finish_run(
+            config.db_path,
+            run_id,
+            jobs_fetched=len(aa_jobs) + len(an_jobs),
+            jobs_new=aa_new + an_new,
+            jobs_updated=aa_reanalyzed + an_reanalyzed,
+            jobs_skipped=aa_skipped + an_skipped,
+            jobs_failed=aa_failed + an_failed,
+            status="success",
+        )
+
+    except Exception as e:
+        finish_run(
+            config.db_path,
+            run_id,
+            jobs_fetched=0,
+            jobs_new=0,
+            jobs_updated=0,
+            jobs_skipped=0,
+            jobs_failed=0,
+            status="error",
+            error_msg=str(e),
+        )
+        raise
 
 
 if __name__ == "__main__":
