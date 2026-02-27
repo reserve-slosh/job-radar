@@ -1,7 +1,7 @@
 import logging
 import json
 from job_radar.config import Config
-from job_radar.db.models import init_db, job_exists, insert_job
+from job_radar.db.models import init_db, job_exists, insert_job, update_job, get_modifikations_timestamp
 from job_radar.sources.arbeitsagentur import fetch_job_list
 from job_radar.pipeline.extractor import build_job
 from job_radar.pipeline.analyzer import analyze
@@ -27,9 +27,14 @@ def run():
         if not refnr:
             continue
 
+        incoming_ts = raw.get("modifikationsTimestamp")
         if job_exists(config.db_path, refnr):
-            skipped += 1
-            continue
+            stored_ts = get_modifikations_timestamp(config.db_path, refnr)
+            if stored_ts == incoming_ts:
+                logger.debug("Übersprungen (unverändert): %s", refnr)
+                skipped += 1
+                continue
+            logger.info("Geändert, re-analysiere: %s", refnr)
 
         job = build_job(raw)
         if job is None:
@@ -46,9 +51,13 @@ def run():
         job.fit_score = result.get("fit_score")
         job.llm_output = json.dumps(result)
 
-        insert_job(config.db_path, job)
-        logger.info("Gespeichert: %s — %s", refnr, job.titel)
-        new += 1
+        if job_exists(config.db_path, refnr):
+            update_job(config.db_path, job)
+            logger.info("Aktualisiert: %s — %s", refnr, job.titel)
+        else:
+            insert_job(config.db_path, job)
+            logger.info("Neu gespeichert: %s — %s", refnr, job.titel)
+            new += 1
 
     logger.info("Fertig. Neu: %d, Übersprungen: %d", new, skipped)
 

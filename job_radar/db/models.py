@@ -21,6 +21,7 @@ class Job:
     tech_stack: str | None = None  # JSON-String
     zusammenfassung: str | None = None
     fit_score: int | None = None
+    modifikations_timestamp: str | None = None
     source: str = "arbeitsagentur"
     fetched_at: str = ""
 
@@ -62,10 +63,19 @@ def init_db(db_path: str) -> None:
                 tech_stack TEXT,
                 zusammenfassung TEXT,
                 fit_score INTEGER,
+                modifikations_timestamp TEXT,
                 source TEXT DEFAULT 'arbeitsagentur',
                 fetched_at TEXT
             )
         """)
+
+
+def get_modifikations_timestamp(db_path: str, refnr: str) -> str | None:
+    with get_connection(db_path) as conn:
+        row = conn.execute(
+            "SELECT modifikations_timestamp FROM jobs WHERE refnr = ?", (refnr,)
+        ).fetchone()
+        return row["modifikations_timestamp"] if row else None
 
 
 def job_exists(db_path: str, refnr: str) -> bool:
@@ -83,11 +93,34 @@ def insert_job(db_path: str, job: Job) -> None:
                 refnr, titel, arbeitgeber, ort, eintrittsdatum,
                 veroeffentlicht_am, raw_text, llm_output, titel_normalisiert,
                 remote, vertragsart, seniority, tech_stack, zusammenfassung,
-                fit_score, source, fetched_at
+                fit_score, modifikations_timestamp, source, fetched_at
             ) VALUES (
                 :refnr, :titel, :arbeitgeber, :ort, :eintrittsdatum,
                 :veroeffentlicht_am, :raw_text, :llm_output, :titel_normalisiert,
                 :remote, :vertragsart, :seniority, :tech_stack, :zusammenfassung,
-                :fit_score, :source, :fetched_at
+                :fit_score, :modifikations_timestamp, :source, :fetched_at
             )
+        """, job.__dict__)
+
+def update_job(db_path: str, job: Job) -> None:
+    with get_connection(db_path) as conn:
+        conn.execute("""
+            UPDATE jobs SET
+                titel = :titel,
+                arbeitgeber = :arbeitgeber,
+                ort = :ort,
+                eintrittsdatum = :eintrittsdatum,
+                veroeffentlicht_am = :veroeffentlicht_am,
+                raw_text = :raw_text,
+                llm_output = :llm_output,
+                titel_normalisiert = :titel_normalisiert,
+                remote = :remote,
+                vertragsart = :vertragsart,
+                seniority = :seniority,
+                tech_stack = :tech_stack,
+                zusammenfassung = :zusammenfassung,
+                fit_score = :fit_score,
+                modifikations_timestamp = :modifikations_timestamp,
+                fetched_at = :fetched_at
+            WHERE refnr = :refnr
         """, job.__dict__)

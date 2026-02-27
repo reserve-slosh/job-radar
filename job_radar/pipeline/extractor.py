@@ -23,6 +23,7 @@ def build_job(raw: dict, source: str = "arbeitsagentur") -> Job | None:
             eintrittsdatum=raw.get("eintrittsdatum"),
             veroeffentlicht_am=raw.get("aktuelleVeroeffentlichungsdatum"),
             raw_text=raw_text,
+            modifikations_timestamp=raw.get("modifikationsTimestamp"),
             source=source,
         )
     except KeyError as e:
