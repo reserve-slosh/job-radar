@@ -80,9 +80,19 @@ def init_db(db_path: str) -> None:
                 fit_score INTEGER,
                 modifikations_timestamp TEXT,
                 source TEXT DEFAULT 'arbeitsagentur',
-                fetched_at TEXT
+                fetched_at TEXT,
+                bewerbung_entwurf TEXT,
+                bewerbung_status TEXT
             )
         """)
+        try:
+            conn.execute("ALTER TABLE jobs ADD COLUMN bewerbung_entwurf TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE jobs ADD COLUMN bewerbung_status TEXT")
+        except sqlite3.OperationalError:
+            pass
         conn.execute("""
             CREATE TABLE IF NOT EXISTS runs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -154,6 +164,28 @@ def update_job(db_path: str, job: Job) -> None:
                 fetched_at = :fetched_at
             WHERE refnr = :refnr
         """, job.__dict__)
+
+
+def update_bewerbung(
+    db_path: str,
+    refnr: str,
+    *,
+    entwurf: str | None = None,
+    status: str | None = None,
+) -> None:
+    updates: dict[str, str] = {}
+    if entwurf is not None:
+        updates["bewerbung_entwurf"] = entwurf
+    if status is not None:
+        updates["bewerbung_status"] = status
+    if not updates:
+        return
+    set_clause = ", ".join(f"{col} = :{col}" for col in updates)
+    updates["refnr"] = refnr
+    with get_connection(db_path) as conn:
+        conn.execute(
+            f"UPDATE jobs SET {set_clause} WHERE refnr = :refnr", updates
+        )
 
 
 def insert_run(db_path: str, run: PipelineRun) -> int:
