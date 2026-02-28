@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def _process_batch(
-    raw_jobs: list[dict], source: str, config: Config
+    raw_jobs: list[dict], source: str, config: Config, search_profile: str = "koeln"
 ) -> tuple[int, int, int, int]:
     """Processes a list of raw job dicts for a given source.
 
@@ -57,6 +57,7 @@ def _process_batch(
         if job is None:
             failed += 1
             continue
+        job.search_profile = search_profile
 
         result = analyze(job.raw_text or "", api_key=config.anthropic_api_key)
 
@@ -85,18 +86,18 @@ def run():
     config = Config()
     init_db(config.db_path)
 
-    run_id = insert_run(config.db_path, PipelineRun(source="all"))
+    run_id = insert_run(config.db_path, PipelineRun(source="all", search_profile="koeln"))
 
     try:
         logger.info("=== Quelle: Arbeitsagentur ===")
         aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt)
         logger.info("%d Jobs gefunden", len(aa_jobs))
-        aa = _process_batch(aa_jobs, "arbeitsagentur", config)
+        aa = _process_batch(aa_jobs, "arbeitsagentur", config, search_profile="koeln")
 
         logger.info("=== Quelle: Arbeitnow ===")
         an_jobs = fetch_arbeitnow_jobs(config.arbeitnow)
         logger.info("%d Jobs gefunden", len(an_jobs))
-        an = _process_batch(an_jobs, "arbeitnow", config)
+        an = _process_batch(an_jobs, "arbeitnow", config, search_profile="koeln")
 
         logger.info(
             "Fertig. Arbeitsagentur — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",

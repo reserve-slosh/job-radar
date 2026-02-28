@@ -16,6 +16,8 @@ from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
+from rich.console import Console
+from rich.table import Table
 
 from job_radar.config import Config
 from job_radar.db.models import get_connection, update_bewerbung
@@ -23,7 +25,7 @@ from job_radar.db.models import get_connection, update_bewerbung
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s — %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s — %(message)s")
 
 _MODEL = "claude-sonnet-4-20250514"
 _THINKING_BUDGET = 3000  # Token-Budget für Reasoning
@@ -175,9 +177,63 @@ def _write_output(
     return path
 
 
+def _pick_job_interactively(db_path: str) -> str:
+    """Displays the top 10 unbeworben jobs and returns the refnr of the user's choice."""
+    with get_connection(db_path) as conn:
+        rows = conn.execute("""
+            SELECT refnr, titel, arbeitgeber, fit_score, search_profile
+            FROM jobs
+            WHERE bewerbung_status IS NULL
+            ORDER BY fit_score DESC NULLS LAST
+            LIMIT 10
+        """).fetchall()
+
+    console = Console()
+
+    if not rows:
+        console.print("[red]Keine Jobs ohne Bewerbungsstatus gefunden.[/red]")
+        sys.exit(1)
+
+    table = Table(show_header=True, header_style="bold", box=None, pad_edge=False)
+    table.add_column("nr",          justify="right", no_wrap=True)
+    table.add_column("refnr",       style="dim",     no_wrap=True)
+    table.add_column("titel",       max_width=40)
+    table.add_column("arbeitgeber", max_width=30)
+    table.add_column("score",       justify="right", no_wrap=True)
+    table.add_column("profile",     no_wrap=True)
+
+    for i, row in enumerate(rows, start=1):
+        table.add_row(
+            str(i),
+            row["refnr"][-8:],
+            row["titel"] or "",
+            row["arbeitgeber"] or "",
+            str(row["fit_score"]) if row["fit_score"] is not None else "",
+            row["search_profile"] or "",
+        )
+
+    console.print("\n[bold]Jobs ohne Bewerbungsstatus (Top 10 nach Score):[/bold]\n")
+    console.print(table)
+    console.print()
+
+    raw = input(f"Nummer eingeben (1–{len(rows)}): ").strip()
+    try:
+        choice = int(raw)
+    except ValueError:
+        console.print(f"[red]Ungültige Eingabe: '{raw}' ist keine Zahl.[/red]")
+        sys.exit(1)
+
+    if not 1 <= choice <= len(rows):
+        console.print(f"[red]Ungültige Auswahl: {choice} liegt außerhalb von 1–{len(rows)}.[/red]")
+        sys.exit(1)
+
+    return rows[choice - 1]["refnr"]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Anschreiben-Entwurf erstellen")
-    parser.add_argument("--refnr", required=True, help="Job-Referenznummer aus der DB")
+    parser.add_argument("--refnr", default=None,
+                        help="Job-Referenznummer aus der DB (optional — interaktive Auswahl wenn weggelassen)")
     parser.add_argument(
         "--profile",
         default="profiles/profile.txt",
@@ -197,6 +253,8 @@ def main() -> None:
 
     config = Config()
 
+    refnr = args.refnr or _pick_job_interactively(config.db_path)
+
     profile_path = Path(args.profile)
     template_path = Path(args.template)
     if not profile_path.exists():
@@ -209,9 +267,9 @@ def main() -> None:
     profile = profile_path.read_text(encoding="utf-8")
     template = template_path.read_text(encoding="utf-8")
 
-    logger.info("Lade Job: %s", args.refnr)
+    logger.info("Lade Job: %s", refnr)
     try:
-        job = _fetch_job(config.db_path, args.refnr)
+        job = _fetch_job(config.db_path, refnr)
     except ValueError as e:
         logger.error("%s", e)
         sys.exit(1)
@@ -229,7 +287,7 @@ def main() -> None:
     out_path = _write_output(tex, Path(args.out), job["arbeitgeber"], sources)
     logger.info("Entwurf gespeichert: %s", out_path)
 
-    update_bewerbung(config.db_path, args.refnr, entwurf=tex, status="entwurf")
+    update_bewerbung(config.db_path, refnr, entwurf=tex, status="entwurf")
     logger.info("bewerbung_status auf 'entwurf' gesetzt")
 
 

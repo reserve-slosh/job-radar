@@ -23,6 +23,7 @@ class Job:
     fit_score: int | None = None
     modifikations_timestamp: str | None = None
     source: str = "arbeitsagentur"
+    search_profile: str = "koeln"
     fetched_at: str = ""
 
     def __post_init__(self):
@@ -82,7 +83,8 @@ def init_db(db_path: str) -> None:
                 source TEXT DEFAULT 'arbeitsagentur',
                 fetched_at TEXT,
                 bewerbung_entwurf TEXT,
-                bewerbung_status TEXT
+                bewerbung_status TEXT,
+                search_profile TEXT DEFAULT 'koeln'
             )
         """)
         try:
@@ -91,6 +93,10 @@ def init_db(db_path: str) -> None:
             pass
         try:
             conn.execute("ALTER TABLE jobs ADD COLUMN bewerbung_status TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE jobs ADD COLUMN search_profile TEXT DEFAULT 'koeln'")
         except sqlite3.OperationalError:
             pass
         conn.execute("""
@@ -105,9 +111,16 @@ def init_db(db_path: str) -> None:
                 jobs_skipped INTEGER DEFAULT 0,
                 jobs_failed INTEGER DEFAULT 0,
                 status TEXT NOT NULL DEFAULT 'running',
-                error_msg TEXT
+                error_msg TEXT,
+                search_profile TEXT DEFAULT 'koeln'
             )
         """)
+        try:
+            conn.execute("ALTER TABLE runs ADD COLUMN search_profile TEXT DEFAULT 'koeln'")
+        except sqlite3.OperationalError:
+            pass
+        conn.execute("UPDATE jobs SET search_profile = 'koeln' WHERE search_profile IS NULL")
+        conn.execute("UPDATE runs SET search_profile = 'koeln' WHERE search_profile IS NULL")
 
 
 def get_modifikations_timestamp(db_path: str, refnr: str) -> str | None:
