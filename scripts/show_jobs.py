@@ -40,8 +40,8 @@ def show(
         conditions.append("fit_score >= ?")
         params.append(min_score)
     if profile is not None:
-        conditions.append("search_profile = ?")
-        params.append(profile)
+        conditions.append("search_profile LIKE ?")
+        params.append(f"%_{profile}")
     if bewerbung_status is not None:
         conditions.append("bewerbung_status = ?")
         params.append(bewerbung_status)

@@ -22,6 +22,7 @@ class SearchProfile:
     title_keywords: frozenset[str]
     title_exclude: frozenset[str]
     fit_score_context: str = ""
+    enabled: bool = True
     arbeitsagentur_queries: list[dict] = field(default_factory=list)
 
     def get_arbeitsagentur_queries(self) -> list[dict]:
@@ -40,10 +41,12 @@ class SearchProfile:
     def matches_title(self, job: dict) -> bool:
         """Returns True if the job title contains a keyword and no exclude term."""
         title = (job.get("titel") or "").lower()
+        # No trailing \b: intentional prefix match (e.g. "referent" matches "Referentin")
         has_keyword = any(
             re.search(r"\b" + re.escape(kw.strip()), title)
             for kw in self.title_keywords
         )
+        # Full word boundary for excludes to avoid over-excluding
         is_excluded = any(
             re.search(r"\b" + re.escape(ex.strip()) + r"\b", title)
             for ex in self.title_exclude
@@ -80,6 +83,7 @@ def load_profiles(profiles_dir: str | Path) -> list[CandidateProfile]:
                 title_keywords=frozenset(sp.get("title_keywords", [])),
                 title_exclude=frozenset(sp.get("title_exclude", [])),
                 fit_score_context=sp.get("fit_score_context", ""),
+                enabled=sp.get("enabled", True),
                 arbeitsagentur_queries=sp.get("arbeitsagentur_queries", []),
             ))
         profiles.append(CandidateProfile(
