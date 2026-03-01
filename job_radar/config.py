@@ -1,10 +1,76 @@
 import re
 from dataclasses import dataclass, field
-from typing import ClassVar
+from pathlib import Path
 from dotenv import load_dotenv
 import os
+import yaml
 
 load_dotenv()
+
+
+@dataclass
+class SearchProfile:
+    name: str
+    remote_only: bool
+    location_filter: list[str]
+    title_keywords: frozenset[str]
+    title_exclude: frozenset[str]
+    fit_score_context: str = ""
+
+    def matches_location(self, job: dict) -> bool:
+        """Returns True if the job passes the location filter for this search profile."""
+        if job.get("remote") is True:
+            return True
+        if self.remote_only:
+            return False
+        ort = job.get("ort") or ""
+        return any(term.lower() in ort.lower() for term in self.location_filter)
+
+    def matches_title(self, job: dict) -> bool:
+        """Returns True if the job title contains a keyword and no exclude term."""
+        title = (job.get("titel") or "").lower()
+        has_keyword = any(
+            re.search(r"\b" + re.escape(kw.strip()) + r"\b", title)
+            for kw in self.title_keywords
+        )
+        is_excluded = any(
+            re.search(r"\b" + re.escape(ex.strip()) + r"\b", title)
+            for ex in self.title_exclude
+        )
+        return has_keyword and not is_excluded
+
+
+@dataclass
+class CandidateProfile:
+    name: str
+    profile_text: str
+    search_profiles: list[SearchProfile]
+
+
+def load_profiles(profiles_dir: str | Path) -> list[CandidateProfile]:
+    """Loads all candidate profiles from YAML files in the given directory."""
+    profiles_dir = Path(profiles_dir)
+    profiles = []
+    for path in sorted(profiles_dir.glob("*.yaml")):
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        search_profiles = [
+            SearchProfile(
+                name=sp["name"],
+                remote_only=sp.get("remote_only", False),
+                location_filter=sp.get("location_filter", []),
+                title_keywords=frozenset(sp.get("title_keywords", [])),
+                title_exclude=frozenset(sp.get("title_exclude", [])),
+                fit_score_context=sp.get("fit_score_context", ""),
+            )
+            for sp in data.get("search_profiles", [])
+        ]
+        profiles.append(CandidateProfile(
+            name=data["name"],
+            profile_text=data.get("profile_text", ""),
+            search_profiles=search_profiles,
+        ))
+    return profiles
 
 
 @dataclass
@@ -23,52 +89,14 @@ class ArbeitsamtConfig:
 
 @dataclass
 class ArbeitnowConfig:
-    TITLE_KEYWORDS: ClassVar[frozenset[str]] = frozenset({
-        "data", "engineer", "scientist", "analytics", "python",
-        "backend", "software", "ml", "ai", "platform",
-    })
-    TITLE_EXCLUDE: ClassVar[frozenset[str]] = frozenset({
-        "head of", "director", "vp ", "chief", "c-level",
-    })
-
     base_url: str = "https://www.arbeitnow.com/api/job-board-api"
     max_pages: int = 5
-    location_filter: list = field(default_factory=lambda: [
-        "Köln", "Cologne", "Koeln", "50",
-    ])
-
-    def matches_location(self, job: dict) -> bool:
-        """Returns True if the normalized job dict passes the location filter.
-
-        Passes if remote is True, or if any filter term is a case-insensitive
-        substring of job["ort"].
-        """
-        if job.get("remote") is True:
-            return True
-        ort = job.get("ort") or ""
-        return any(term.lower() in ort.lower() for term in self.location_filter)
-
-    def matches_title(self, job: dict) -> bool:
-        """Returns True if the job title contains a keyword and no exclude term.
-
-        Uses word-boundary matching so e.g. 'ai' doesn't match 'email' and
-        'ml' doesn't match 'html'.
-        """
-        title = (job.get("titel") or "").lower()
-        has_keyword = any(
-            re.search(r"\b" + re.escape(kw.strip()) + r"\b", title)
-            for kw in self.TITLE_KEYWORDS
-        )
-        is_excluded = any(
-            re.search(r"\b" + re.escape(ex.strip()) + r"\b", title)
-            for ex in self.TITLE_EXCLUDE
-        )
-        return has_keyword and not is_excluded
 
 
 @dataclass
 class Config:
     anthropic_api_key: str = field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", ""))
     db_path: str = field(default_factory=lambda: os.getenv("DB_PATH", "job_radar.db"))
+    profiles_dir: str = field(default_factory=lambda: os.getenv("PROFILES_DIR", "profiles"))
     arbeitsamt: ArbeitsamtConfig = field(default_factory=ArbeitsamtConfig)
     arbeitnow: ArbeitnowConfig = field(default_factory=ArbeitnowConfig)
