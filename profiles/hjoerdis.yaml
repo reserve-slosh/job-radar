@@ -1,6 +1,6 @@
 name: hjoerdis
 
-# TODO: fill in actual candidate profile
+# TODO: mit Hjördis zusammen ausarbeiten
 profile_text: ""
 
 search_profiles:
@@ -11,43 +11,107 @@ search_profiles:
       - "Cologne"
       - "Koeln"
       - "50"
+    arbeitsagentur_queries:
+      - was: "Gleichstellung"
+        wo: "50667"
+        umkreis: 25
+      - was: "Diversity"
+        wo: "50667"
+        umkreis: 25
+      - was: "Gesundheitsmanagement"
+        wo: "50667"
+        umkreis: 25
+      - was: "Sozialarbeit"
+        wo: "50667"
+        umkreis: 25
+      - was: "Bildungsreferent"
+        wo: "50667"
+        umkreis: 25
     title_keywords:
-      - data
-      - engineer
-      - scientist
-      - analytics
-      - python
-      - backend
-      - software
-      - ml
-      - ai
-      - platform
+      # Diversity / Gleichstellung
+      - gleichstellung
+      - diversity
+      - inklusion
+      - inclusion
+      - "d&i"
+      # Bildung / Prävention
+      - bildungsreferent
+      - bildungskoordinat
+      - prävention
+      - prevention
+      # Gesundheit / BGM
+      - gesundheitsmanagement
+      - bgm
+      - wellbeing
+      - "mental health"
+      # Beratung / Koordination (sozial)
+      - sozialberatung
+      - sozialkoordinat
+      - "case management"
+      - "care management"
+      - sozialmanagement
+      # CSR / People
+      - nachhaltigkeitsreferent
+      - "people & culture"
+      - personalreferent
+      # Breite Sozial-Treffer
+      - sozialpädagog
+      - sozialarbeiter
+      - gemeinwesenarbeit
     title_exclude:
       - head of
       - director
       - "vp "
       - chief
-      - c-level
-    fit_score_context: ""
+      - pflegefachkraft
+      - krankenpflege
+    fit_score_context: ""  # TODO: mit Hjördis ausarbeiten
 
   - name: remote_de
     remote_only: true
     location_filter: []
+    arbeitsagentur_queries:
+      - was: "Gleichstellung"
+      - was: "Diversity"
+      - was: "Gesundheitsmanagement"
+      - was: "Sozialarbeit"
+      - was: "Bildungsreferent"
     title_keywords:
-      - data
-      - engineer
-      - scientist
-      - analytics
-      - python
-      - backend
-      - software
-      - ml
-      - ai
-      - platform
+      # Diversity / Gleichstellung
+      - gleichstellung
+      - diversity
+      - inklusion
+      - inclusion
+      - "d&i"
+      # Bildung / Prävention
+      - bildungsreferent
+      - bildungskoordinat
+      - prävention
+      - prevention
+      # Gesundheit / BGM
+      - gesundheitsmanagement
+      - bgm
+      - wellbeing
+      - "mental health"
+      # Beratung / Koordination (sozial)
+      - sozialberatung
+      - sozialkoordinat
+      - "case management"
+      - "care management"
+      - sozialmanagement
+      # CSR / People
+      - nachhaltigkeitsreferent
+      - "people & culture"
+      - personalreferent
+      # Breite Sozial-Treffer
+      - sozialpädagog
+      - sozialarbeiter
+      - gemeinwesenarbeit
     title_exclude:
       - head of
       - director
       - "vp "
       - chief
-      - c-level
-    fit_score_context: ""
+      - pflegefachkraft
+      - krankenpflege
+    fit_score_context: ""  # TODO: mit Hjördis ausarbeiten

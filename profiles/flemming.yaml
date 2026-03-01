@@ -25,6 +25,10 @@ search_profiles:
       - "Cologne"
       - "Koeln"
       - "50"
+    arbeitsagentur_queries:
+      - was: "Data Engineer"
+        wo: "50667"
+        umkreis: 25
     title_keywords:
       - data
       - engineer
@@ -60,6 +64,8 @@ search_profiles:
   - name: remote_de
     remote_only: true
     location_filter: []
+    arbeitsagentur_queries:
+      - was: "Data Engineer"
     title_keywords:
       - data
       - engineer

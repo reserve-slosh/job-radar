@@ -7,6 +7,12 @@ import yaml
 
 load_dotenv()
 
+_AA_QUERY_DEFAULTS: dict = {
+    "angebotsart": 1,
+    "arbeitszeit": "vz;tz",
+    "size": 25,
+}
+
 
 @dataclass
 class SearchProfile:
@@ -16,6 +22,11 @@ class SearchProfile:
     title_keywords: frozenset[str]
     title_exclude: frozenset[str]
     fit_score_context: str = ""
+    arbeitsagentur_queries: list[dict] = field(default_factory=list)
+
+    def get_arbeitsagentur_queries(self) -> list[dict]:
+        """Returns merged query dicts: defaults overridden by each entry."""
+        return [{**_AA_QUERY_DEFAULTS, **q} for q in self.arbeitsagentur_queries]
 
     def matches_location(self, job: dict) -> bool:
         """Returns True if the job passes the location filter for this search profile."""
@@ -30,7 +41,7 @@ class SearchProfile:
         """Returns True if the job title contains a keyword and no exclude term."""
         title = (job.get("titel") or "").lower()
         has_keyword = any(
-            re.search(r"\b" + re.escape(kw.strip()) + r"\b", title)
+            re.search(r"\b" + re.escape(kw.strip()), title)
             for kw in self.title_keywords
         )
         is_excluded = any(
@@ -54,17 +65,23 @@ def load_profiles(profiles_dir: str | Path) -> list[CandidateProfile]:
     for path in sorted(profiles_dir.glob("*.yaml")):
         with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        search_profiles = [
-            SearchProfile(
+        search_profiles = []
+        for sp in data.get("search_profiles", []):
+            if "arbeitsagentur_query" in sp:
+                raise ValueError(
+                    f"Profile '{data['name']}' uses deprecated key 'arbeitsagentur_query' "
+                    f"in search profile '{sp['name']}'. Rename it to 'arbeitsagentur_queries' "
+                    f"and wrap the value in a list."
+                )
+            search_profiles.append(SearchProfile(
                 name=sp["name"],
                 remote_only=sp.get("remote_only", False),
                 location_filter=sp.get("location_filter", []),
                 title_keywords=frozenset(sp.get("title_keywords", [])),
                 title_exclude=frozenset(sp.get("title_exclude", [])),
                 fit_score_context=sp.get("fit_score_context", ""),
-            )
-            for sp in data.get("search_profiles", [])
-        ]
+                arbeitsagentur_queries=sp.get("arbeitsagentur_queries", []),
+            ))
         profiles.append(CandidateProfile(
             name=data["name"],
             profile_text=data.get("profile_text", ""),
@@ -77,14 +94,7 @@ def load_profiles(profiles_dir: str | Path) -> list[CandidateProfile]:
 class ArbeitsamtConfig:
     base_url: str = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4"
     api_key: str = "jobboerse-jobsuche"
-    search_params: dict = field(default_factory=lambda: {
-        "was": "Data Engineer",
-        "wo": "50667",
-        "umkreis": 25,
-        "angebotsart": 1,
-        "arbeitszeit": "vz;tz",
-        "size": 25,
-    })
+    max_pages: int = 10
 
 
 @dataclass
