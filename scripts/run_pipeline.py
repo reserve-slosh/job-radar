@@ -65,6 +65,12 @@ def _process_batch(
         if job is None:
             failed += 1
             continue
+
+        if not search_profile.matches_title({"titel": job.titel}) or \
+           not search_profile.matches_location({"ort": job.ort, "remote": job.remote == "remote"}):
+            skipped += 1
+            continue
+
         job.search_profile = profile_key
 
         result = analyze(
