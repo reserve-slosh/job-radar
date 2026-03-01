@@ -3,6 +3,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_MODEL = "claude-haiku-4-5"
+
 _PROMPT_TEMPLATE = """\
 Du analysierst eine Stellenanzeige für einen Kandidaten im Bereich Data Engineering / Data Science.
 Extrahiere die folgenden Informationen und antworte ausschließlich mit einem JSON-Objekt, ohne weiteren Text.
@@ -45,7 +47,7 @@ def analyze(text: str, api_key: str = "", profile_text: str = "", fit_score_cont
         import anthropic
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-haiku-4-5",
+            model=_MODEL,
             max_tokens=1024,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -53,6 +55,9 @@ def analyze(text: str, api_key: str = "", profile_text: str = "", fit_score_cont
         if raw.startswith("```"):
             raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
         return json.loads(raw)
+    except json.JSONDecodeError as e:
+        logger.error("LLM-Analyse: ungültiges JSON in Antwort: %s", e)
+        return _stub()
     except Exception as e:
         logger.error("LLM-Analyse fehlgeschlagen: %s", e)
         return _stub()

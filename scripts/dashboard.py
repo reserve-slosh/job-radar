@@ -330,7 +330,7 @@ def _generate_cover_letter(config: Config, job: dict, candidate_name: str) -> No
     import importlib.util
     bewerbung_path = _PROJECT_ROOT / "scripts" / "bewerbung.py"
     spec = importlib.util.spec_from_file_location("bewerbung", bewerbung_path)
-    bewerbung = importlib.util.load_from_spec(spec)
+    bewerbung = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(bewerbung)
 
     with st.spinner("Sonnet analysiert die Stelle und recherchiert das Unternehmen..."):

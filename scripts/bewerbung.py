@@ -25,7 +25,6 @@ from job_radar.db.models import get_connection, update_bewerbung
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s — %(message)s")
 
 _MODEL = "claude-sonnet-4-20250514"
 _THINKING_BUDGET = 3000  # Token-Budget für Reasoning

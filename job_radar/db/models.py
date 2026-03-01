@@ -1,7 +1,7 @@
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -29,10 +29,12 @@ class Job:
     bewerbung_status: str | None = None
     bewerbung_quellen: str | None = None  # JSON-Array von URLs
     duplicate_of: str | None = None       # refnr des Original-Jobs
+    job_status: str = "active"
+    status_updated_at: str | None = None
 
     def __post_init__(self):
         if not self.fetched_at:
-            self.fetched_at = datetime.utcnow().isoformat()
+            self.fetched_at = datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
@@ -89,17 +91,21 @@ def init_db(db_path: str) -> None:
                 fetched_at TEXT,
                 bewerbung_entwurf TEXT,
                 bewerbung_status TEXT,
-                search_profile TEXT DEFAULT 'koeln',
+                search_profile TEXT DEFAULT '',
                 bewerbung_quellen TEXT,
-                duplicate_of TEXT REFERENCES jobs(refnr)
+                duplicate_of TEXT REFERENCES jobs(refnr),
+                job_status TEXT DEFAULT 'active',
+                status_updated_at TEXT
             )
         """)
         # Idempotent migrations for existing databases
         _add_column(conn, "jobs", "bewerbung_entwurf", "TEXT")
         _add_column(conn, "jobs", "bewerbung_status", "TEXT")
-        _add_column(conn, "jobs", "search_profile", "TEXT DEFAULT 'koeln'")
+        _add_column(conn, "jobs", "search_profile", "TEXT DEFAULT ''")
         _add_column(conn, "jobs", "bewerbung_quellen", "TEXT")
         _add_column(conn, "jobs", "duplicate_of", "TEXT")
+        _add_column(conn, "jobs", "job_status", "TEXT DEFAULT 'active'")
+        _add_column(conn, "jobs", "status_updated_at", "TEXT")
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS runs (
@@ -107,7 +113,7 @@ def init_db(db_path: str) -> None:
                 started_at TEXT NOT NULL,
                 finished_at TEXT,
                 source TEXT NOT NULL,
-                search_profile TEXT DEFAULT 'koeln',
+                search_profile TEXT DEFAULT '',
                 jobs_fetched INTEGER DEFAULT 0,
                 jobs_new INTEGER DEFAULT 0,
                 jobs_updated INTEGER DEFAULT 0,
@@ -117,14 +123,13 @@ def init_db(db_path: str) -> None:
                 error_msg TEXT
             )
         """)
-        _add_column(conn, "runs", "search_profile", "TEXT DEFAULT 'koeln'")
-
-        conn.execute("UPDATE jobs SET search_profile = 'koeln' WHERE search_profile IS NULL")
-        conn.execute("UPDATE runs SET search_profile = 'koeln' WHERE search_profile IS NULL")
+        _add_column(conn, "runs", "search_profile", "TEXT DEFAULT ''")
 
 
 def _add_column(conn: sqlite3.Connection, table: str, column: str, col_type: str) -> None:
-    """Adds a column to a table if it doesn't already exist."""
+    """Adds a column to a table if it doesn't already exist.
+    All arguments must be trusted literal strings — SQL is built via f-string, not parameterized.
+    """
     try:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
     except sqlite3.OperationalError:
@@ -228,11 +233,11 @@ def insert_run(db_path: str, run: PipelineRun) -> int:
         cursor = conn.execute("""
             INSERT INTO runs (
                 started_at, finished_at, source, search_profile,
-                jobs_fetched, jobs_new, jobs_updated, jobs_skipped,
+                jobs_fetched, jobs_new, jobs_updated, jobs_skipped, jobs_failed,
                 status, error_msg
             ) VALUES (
                 :started_at, :finished_at, :source, :search_profile,
-                :jobs_fetched, :jobs_new, :jobs_updated, :jobs_skipped,
+                :jobs_fetched, :jobs_new, :jobs_updated, :jobs_skipped, :jobs_failed,
                 :status, :error_msg
             )
         """, run.__dict__)
@@ -264,7 +269,7 @@ def finish_run(
                 error_msg = :error_msg
             WHERE id = :id
         """, {
-            "finished_at": datetime.utcnow().isoformat(),
+            "finished_at": datetime.now(timezone.utc).isoformat(),
             "jobs_fetched": jobs_fetched,
             "jobs_new": jobs_new,
             "jobs_updated": jobs_updated,
@@ -274,3 +279,37 @@ def finish_run(
             "error_msg": error_msg,
             "id": run_id,
         })
+
+
+def get_active_refnrs(db_path: str, search_profile: str) -> set[str]:
+    """Returns refnrs of all active jobs for a given search profile."""
+    with get_connection(db_path) as conn:
+        rows = conn.execute(
+            "SELECT refnr FROM jobs WHERE search_profile = ? AND job_status = 'active'",
+            (search_profile,),
+        ).fetchall()
+    return {row["refnr"] for row in rows}
+
+
+def mark_jobs_presumably_filled(
+    db_path: str,
+    search_profile: str,
+    seen_refnrs: set[str],
+) -> int:
+    """Marks active jobs for a profile as presumably_filled if not in seen_refnrs.
+
+    Returns the number of jobs marked. If seen_refnrs is empty, does nothing and
+    returns 0 — an empty fetch should not mark all jobs as filled.
+    """
+    if not seen_refnrs:
+        return 0
+    placeholders = ",".join("?" * len(seen_refnrs))
+    now = datetime.now(timezone.utc).isoformat()
+    with get_connection(db_path) as conn:
+        cursor = conn.execute(
+            f"UPDATE jobs SET job_status = 'presumably_filled', status_updated_at = ? "
+            f"WHERE search_profile = ? AND job_status = 'active' "
+            f"AND refnr NOT IN ({placeholders})",
+            [now, search_profile, *seen_refnrs],
+        )
+        return cursor.rowcount
