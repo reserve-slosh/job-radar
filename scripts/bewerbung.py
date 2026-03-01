@@ -1,7 +1,7 @@
 """Bewerbungsassistent — generates a LaTeX cover letter draft for a given job.
 
 Usage:
-    python scripts/bewerbung.py --refnr <refnr> [--profile profiles/profile.txt]
+    python scripts/bewerbung.py --refnr <refnr> [--candidate flemming]
                                 [--template templates/anschreiben_template.tex]
                                 [--out output/]
 """
@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 
-from job_radar.config import Config
+from job_radar.config import CandidateProfile, Config, load_profiles
 from job_radar.db.models import get_connection, update_bewerbung
 
 load_dotenv()
@@ -60,7 +60,7 @@ def _escape_latex(text: str) -> str:
     return "".join(_LATEX_ESCAPE.get(c, c) for c in text)
 
 
-def _build_prompt(profile: str, job: dict) -> str:
+def _build_prompt(candidate: CandidateProfile, job: dict) -> str:
     job_context = (
         f"Stellentitel: {job['titel']}\n"
         f"Unternehmen: {job['arbeitgeber']}\n"
@@ -68,10 +68,10 @@ def _build_prompt(profile: str, job: dict) -> str:
         f"Stellenbeschreibung:\n{job['raw_text'] or job.get('zusammenfassung', '')}"
     )
 
-    return f"""Du schreibst ein Anschreiben für Flemming Reese.
+    return f"""Du schreibst ein Anschreiben für {candidate.name}.
 
 # Kandidatenprofil & Stil-Referenz
-{profile}
+{candidate.profile_text}
 
 # Stellenanzeige
 {job_context}
@@ -177,16 +177,26 @@ def _write_output(
     return path
 
 
-def _pick_job_interactively(db_path: str) -> str:
+def _pick_job_interactively(db_path: str, candidate_name: str | None = None) -> str:
     """Displays the top 10 unbeworben jobs and returns the refnr of the user's choice."""
     with get_connection(db_path) as conn:
-        rows = conn.execute("""
-            SELECT refnr, titel, arbeitgeber, fit_score, search_profile
-            FROM jobs
-            WHERE bewerbung_status IS NULL
-            ORDER BY fit_score DESC NULLS LAST
-            LIMIT 10
-        """).fetchall()
+        if candidate_name:
+            rows = conn.execute("""
+                SELECT refnr, titel, arbeitgeber, fit_score, search_profile
+                FROM jobs
+                WHERE bewerbung_status IS NULL
+                  AND search_profile LIKE ?
+                ORDER BY fit_score DESC NULLS LAST
+                LIMIT 10
+            """, (f"{candidate_name}_%",)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT refnr, titel, arbeitgeber, fit_score, search_profile
+                FROM jobs
+                WHERE bewerbung_status IS NULL
+                ORDER BY fit_score DESC NULLS LAST
+                LIMIT 10
+            """).fetchall()
 
     console = Console()
 
@@ -235,9 +245,9 @@ def main() -> None:
     parser.add_argument("--refnr", default=None,
                         help="Job-Referenznummer aus der DB (optional — interaktive Auswahl wenn weggelassen)")
     parser.add_argument(
-        "--profile",
-        default="profiles/profile.txt",
-        help="Pfad zur Kandidatenprofil-Datei (default: profiles/profile.txt)",
+        "--candidate",
+        default="flemming",
+        help="Kandidatenname (YAML-Dateiname ohne Endung in profiles/, default: flemming)",
     )
     parser.add_argument(
         "--template",
@@ -253,18 +263,22 @@ def main() -> None:
 
     config = Config()
 
-    refnr = args.refnr or _pick_job_interactively(config.db_path)
-
-    profile_path = Path(args.profile)
-    template_path = Path(args.template)
-    if not profile_path.exists():
-        logger.error("Profil-Datei nicht gefunden: %s", profile_path)
+    candidates = load_profiles(config.profiles_dir)
+    candidate = next((c for c in candidates if c.name.lower() == args.candidate.lower()), None)
+    if candidate is None:
+        logger.error("Kandidat '%s' nicht gefunden in '%s'.", args.candidate, config.profiles_dir)
         sys.exit(1)
+    if not candidate.profile_text:
+        logger.error("profile_text für Kandidat '%s' ist leer.", candidate.name)
+        sys.exit(1)
+
+    refnr = args.refnr or _pick_job_interactively(config.db_path, candidate_name=candidate.name)
+
+    template_path = Path(args.template)
     if not template_path.exists():
         logger.error("Template nicht gefunden: %s", template_path)
         sys.exit(1)
 
-    profile = profile_path.read_text(encoding="utf-8")
     template = template_path.read_text(encoding="utf-8")
 
     logger.info("Lade Job: %s", refnr)
@@ -276,7 +290,7 @@ def main() -> None:
     logger.info("Job: %s @ %s", job["titel"], job["arbeitgeber"])
 
     logger.info("Rufe Sonnet auf (inkl. Web Search)...")
-    prompt = _build_prompt(profile, job)
+    prompt = _build_prompt(candidate, job)
     values, sources = _call_sonnet(prompt, config.anthropic_api_key)
 
     logger.info("Stil gewählt: Anschreiben %s", values.get("stil", "?"))
