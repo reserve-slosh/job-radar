@@ -213,3 +213,4 @@ CLAUDE.md
 logs/
 job_radar.db
 .DS_Store
+.idea/
