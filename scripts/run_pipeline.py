@@ -2,7 +2,7 @@ import logging
 import logging.handlers
 import json
 from pathlib import Path
-from job_radar.config import Config, ArbeitnowConfig
+from job_radar.config import Config, load_profiles, CandidateProfile, SearchProfile
 from job_radar.db.models import (
     init_db, job_exists, insert_job, update_job, get_modifikations_timestamp,
     PipelineRun, insert_run, finish_run,
@@ -30,12 +30,17 @@ logger = logging.getLogger(__name__)
 
 
 def _process_batch(
-    raw_jobs: list[dict], source: str, config: Config, search_profile: str = "koeln"
+    raw_jobs: list[dict],
+    source: str,
+    config: Config,
+    candidate: CandidateProfile,
+    search_profile: SearchProfile,
 ) -> tuple[int, int, int, int]:
-    """Processes a list of raw job dicts for a given source.
+    """Processes a list of raw job dicts for a given source and profile combination.
 
     Returns (new, skipped, reanalyzed, failed).
     """
+    profile_key = f"{candidate.name}_{search_profile.name}"
     new, skipped, reanalyzed, failed = 0, 0, 0, 0
 
     for raw in raw_jobs:
@@ -57,9 +62,14 @@ def _process_batch(
         if job is None:
             failed += 1
             continue
-        job.search_profile = search_profile
+        job.search_profile = profile_key
 
-        result = analyze(job.raw_text or "", api_key=config.anthropic_api_key)
+        result = analyze(
+            job.raw_text or "",
+            api_key=config.anthropic_api_key,
+            profile_text=candidate.profile_text,
+            fit_score_context=search_profile.fit_score_context,
+        )
 
         job.titel_normalisiert = result.get("titel_normalisiert")
         job.remote = result.get("remote")
@@ -82,38 +92,48 @@ def _process_batch(
     return new, skipped, reanalyzed, failed
 
 
-def run():
-    config = Config()
-    init_db(config.db_path)
+def _run_profile(
+    candidate: CandidateProfile,
+    search_profile: SearchProfile,
+    config: Config,
+) -> None:
+    """Runs the full pipeline for one candidate × search_profile combination."""
+    profile_key = f"{candidate.name}_{search_profile.name}"
+    logger.info("=== Profil: %s ===", profile_key)
 
-    run_id = insert_run(config.db_path, PipelineRun(source="all", search_profile="koeln"))
+    run_id = insert_run(
+        config.db_path,
+        PipelineRun(source="all", search_profile=profile_key),
+    )
 
     try:
-        logger.info("=== Quelle: Arbeitsagentur ===")
+        logger.info("--- Quelle: Arbeitsagentur ---")
         aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt)
         logger.info("%d Jobs gefunden", len(aa_jobs))
-        aa = _process_batch(aa_jobs, "arbeitsagentur", config, search_profile="koeln")
+        aa = _process_batch(aa_jobs, "arbeitsagentur", config, candidate, search_profile)
 
-        logger.info("=== Quelle: Arbeitnow ===")
-        an_jobs = fetch_arbeitnow_jobs(config.arbeitnow)
+        logger.info("--- Quelle: Arbeitnow ---")
+        an_jobs = fetch_arbeitnow_jobs(config.arbeitnow, search_profile)
         logger.info("%d Jobs gefunden", len(an_jobs))
-        an = _process_batch(an_jobs, "arbeitnow", config, search_profile="koeln")
-
-        logger.info(
-            "Fertig. Arbeitsagentur — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-            *aa,
-        )
-        logger.info(
-            "Fertig. Arbeitnow     — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-            *an,
-        )
-        logger.info(
-            "Fertig. Gesamt        — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-            *(x + y for x, y in zip(aa, an)),
-        )
+        an = _process_batch(an_jobs, "arbeitnow", config, candidate, search_profile)
 
         aa_new, aa_skipped, aa_reanalyzed, aa_failed = aa
         an_new, an_skipped, an_reanalyzed, an_failed = an
+        totals = tuple(x + y for x, y in zip(aa, an))
+
+        logger.info(
+            "[%s] Arbeitsagentur — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
+            profile_key, *aa,
+        )
+        logger.info(
+            "[%s] Arbeitnow     — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
+            profile_key, *an,
+        )
+        logger.info(
+            "[%s] Gesamt        — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
+            profile_key, *totals,
+        )
+
         finish_run(
             config.db_path,
             run_id,
@@ -138,6 +158,20 @@ def run():
             error_msg=str(e),
         )
         raise
+
+
+def run() -> None:
+    config = Config()
+    init_db(config.db_path)
+
+    candidates = load_profiles(config.profiles_dir)
+    if not candidates:
+        logger.warning("Keine Profile in '%s' gefunden.", config.profiles_dir)
+        return
+
+    for candidate in candidates:
+        for search_profile in candidate.search_profiles:
+            _run_profile(candidate, search_profile, config)
 
 
 if __name__ == "__main__":
