@@ -1,0 +1,53 @@
+name: hjoerdis
+
+# TODO: fill in actual candidate profile
+profile_text: ""
+
+search_profiles:
+  - name: koeln
+    remote_only: false
+    location_filter:
+      - "Köln"
+      - "Cologne"
+      - "Koeln"
+      - "50"
+    title_keywords:
+      - data
+      - engineer
+      - scientist
+      - analytics
+      - python
+      - backend
+      - software
+      - ml
+      - ai
+      - platform
+    title_exclude:
+      - head of
+      - director
+      - "vp "
+      - chief
+      - c-level
+    fit_score_context: ""
+
+  - name: remote_de
+    remote_only: true
+    location_filter: []
+    title_keywords:
+      - data
+      - engineer
+      - scientist
+      - analytics
+      - python
+      - backend
+      - software
+      - ml
+      - ai
+      - platform
+    title_exclude:
+      - head of
+      - director
+      - "vp "
+      - chief
+      - c-level
+    fit_score_context: ""
