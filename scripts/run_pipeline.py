@@ -1,6 +1,7 @@
 import logging
 import logging.handlers
 import json
+import os
 from pathlib import Path
 from job_radar.config import Config, load_profiles, CandidateProfile, SearchProfile
 from job_radar.db.models import (
@@ -168,6 +169,13 @@ def run() -> None:
     if not candidates:
         logger.warning("Keine Profile in '%s' gefunden.", config.profiles_dir)
         return
+
+    # Optional: filter via PIPELINE_CANDIDATES env var (set by dashboard trigger)
+    pipeline_filter = os.environ.get("PIPELINE_CANDIDATES")
+    if pipeline_filter:
+        allowed = {name.strip().lower() for name in pipeline_filter.split(",")}
+        candidates = [c for c in candidates if c.name.lower() in allowed]
+        logger.info("Kandidaten-Filter aktiv: %s", [c.name for c in candidates])
 
     for candidate in candidates:
         for search_profile in candidate.search_profiles:
