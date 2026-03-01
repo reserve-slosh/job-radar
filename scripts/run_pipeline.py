@@ -1,3 +1,4 @@
+import argparse
 import logging
 import logging.handlers
 import json
@@ -36,6 +37,7 @@ def _process_batch(
     config: Config,
     candidate: CandidateProfile,
     search_profile: SearchProfile,
+    no_llm: bool = False,
 ) -> tuple[int, int, int, int]:
     """Processes a list of raw job dicts for a given source and profile combination.
 
@@ -67,7 +69,7 @@ def _process_batch(
 
         result = analyze(
             job.raw_text or "",
-            api_key=config.anthropic_api_key,
+            api_key="" if no_llm else config.anthropic_api_key,
             profile_text=candidate.profile_text,
             fit_score_context=search_profile.fit_score_context,
         )
@@ -97,6 +99,7 @@ def _run_profile(
     candidate: CandidateProfile,
     search_profile: SearchProfile,
     config: Config,
+    no_llm: bool = False,
 ) -> None:
     """Runs the full pipeline for one candidate × search_profile combination."""
     profile_key = f"{candidate.name}_{search_profile.name}"
@@ -109,14 +112,14 @@ def _run_profile(
 
     try:
         logger.info("--- Quelle: Arbeitsagentur ---")
-        aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt)
+        aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt, search_profile)
         logger.info("%d Jobs gefunden", len(aa_jobs))
-        aa = _process_batch(aa_jobs, "arbeitsagentur", config, candidate, search_profile)
+        aa = _process_batch(aa_jobs, "arbeitsagentur", config, candidate, search_profile, no_llm)
 
         logger.info("--- Quelle: Arbeitnow ---")
         an_jobs = fetch_arbeitnow_jobs(config.arbeitnow, search_profile)
         logger.info("%d Jobs gefunden", len(an_jobs))
-        an = _process_batch(an_jobs, "arbeitnow", config, candidate, search_profile)
+        an = _process_batch(an_jobs, "arbeitnow", config, candidate, search_profile, no_llm)
 
         aa_new, aa_skipped, aa_reanalyzed, aa_failed = aa
         an_new, an_skipped, an_reanalyzed, an_failed = an
@@ -162,6 +165,14 @@ def _run_profile(
 
 
 def run() -> None:
+    parser = argparse.ArgumentParser(description="Job-Radar Pipeline")
+    parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="LLM-Analyse überspringen (nur fetchen & filtern, kein API-Key nötig)",
+    )
+    args = parser.parse_args()
+
     config = Config()
     init_db(config.db_path)
 
@@ -179,7 +190,7 @@ def run() -> None:
 
     for candidate in candidates:
         for search_profile in candidate.search_profiles:
-            _run_profile(candidate, search_profile, config)
+            _run_profile(candidate, search_profile, config, no_llm=args.no_llm)
 
 
 if __name__ == "__main__":
