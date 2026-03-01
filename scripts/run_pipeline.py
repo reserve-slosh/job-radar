@@ -7,7 +7,7 @@ from pathlib import Path
 from job_radar.config import Config, load_profiles, CandidateProfile, SearchProfile
 from job_radar.db.models import (
     init_db, job_exists, insert_job, update_job, get_modifikations_timestamp,
-    PipelineRun, insert_run, finish_run,
+    PipelineRun, insert_run, finish_run, mark_jobs_presumably_filled,
 )
 from job_radar.sources.arbeitsagentur import fetch_job_list as fetch_arbeitsagentur_jobs
 from job_radar.sources.arbeitnow import fetch_job_list as fetch_arbeitnow_jobs
@@ -51,6 +51,12 @@ def _process_batch(
         if not refnr:
             continue
 
+        # For arbeitsagentur, raw dict has 'titel' directly — pre-filter before the
+        # detail-page HTTP fetch that build_job triggers for that source.
+        if source == "arbeitsagentur" and not search_profile.matches_title({"titel": raw.get("titel", "")}):
+            skipped += 1
+            continue
+
         incoming_ts = raw.get("modifikationsTimestamp")
         is_existing = job_exists(config.db_path, refnr)
         if is_existing:
@@ -61,7 +67,7 @@ def _process_batch(
                 continue
             logger.info("Geändert, re-analysiere: %s", refnr)
 
-        job = build_job(raw, source=source)
+        job = build_job(raw, source=source, remote_hint=bool(raw.get("remote", False)))
         if job is None:
             failed += 1
             continue
@@ -111,6 +117,11 @@ def _run_profile(
     profile_key = f"{candidate.name}_{search_profile.name}"
     logger.info("=== Profil: %s ===", profile_key)
 
+    if not candidate.profile_text.strip():
+        logger.warning(
+            "[%s] profile_text is empty — LLM fit scores will be meaningless", profile_key
+        )
+
     run_id = insert_run(
         config.db_path,
         PipelineRun(source="all", search_profile=profile_key),
@@ -126,6 +137,15 @@ def _run_profile(
         an_jobs = fetch_arbeitnow_jobs(config.arbeitnow, search_profile)
         logger.info("%d Jobs gefunden", len(an_jobs))
         an = _process_batch(an_jobs, "arbeitnow", config, candidate, search_profile, no_llm)
+
+        seen_refnrs = {
+            raw.get("refnr")
+            for raw in aa_jobs + an_jobs
+            if raw.get("refnr")
+        }
+        filled_count = mark_jobs_presumably_filled(config.db_path, profile_key, seen_refnrs)
+        if filled_count:
+            logger.info("[%s] %d Jobs als vermutlich besetzt markiert.", profile_key, filled_count)
 
         aa_new, aa_skipped, aa_reanalyzed, aa_failed = aa
         an_new, an_skipped, an_reanalyzed, an_failed = an
@@ -196,6 +216,13 @@ def run() -> None:
 
     for candidate in candidates:
         for search_profile in candidate.search_profiles:
+            if not search_profile.enabled:
+                logger.info(
+                    "Profil %s_%s deaktiviert — übersprungen.",
+                    candidate.name,
+                    search_profile.name,
+                )
+                continue
             _run_profile(candidate, search_profile, config, no_llm=args.no_llm)
 
 
