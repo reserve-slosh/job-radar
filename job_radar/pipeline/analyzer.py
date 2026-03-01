@@ -3,7 +3,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-PROMPT_TEMPLATE = """Du analysierst eine Stellenanzeige für einen Junior Data Engineer / Data Scientist.
+_PROMPT_TEMPLATE = """\
+Du analysierst eine Stellenanzeige für einen Kandidaten im Bereich Data Engineering / Data Science.
 Extrahiere die folgenden Informationen und antworte ausschließlich mit einem JSON-Objekt, ohne weiteren Text.
 
 Stellenanzeige:
@@ -22,43 +23,23 @@ Antworte mit diesem Schema:
 
 Bewerte fit_score (1–5) anhand dieses Kandidatenprofils:
 
-Erfahrung:
-- M.Sc. Data Science (HAW Kiel, 02/2025, Note 1,7); Schwerpunkte: Data Management, Cloud Computing, Big Data Technologies (alle 1,0)
-- ~1,5 Jahre als Data Scientist am GEOMAR (Automatisierung, Benchmarking, Python-Pipelines)
-- Freiberuflich: End-to-End Datenpipeline für Medienunternehmen (Scraping, Normalisierung, Deduplizierung, MySQL, Docker, Google Cloud, Hetzner-Linux-Server)
-- Masterarbeit: modulares Python-Package (src-Layout, pytest, mehrere Solver-Familien) für AUV-Routenoptimierung
-- Noch keine Vollzeit-Festanstellung; alle Erfahrung parallel zum Studium
+{profile_text}
 
-Stack (produktiv eingesetzt):
-- Python (stark): Pandas, NumPy, Requests/BeautifulSoup, SQLAlchemy, Matplotlib
-- Data Engineering: ETL/ELT, MySQL, Docker, Google Cloud, Linux (Ubuntu), Git
-- Software Engineering: modulare Paketarchitektur, pytest, LLM-assisted development
-- SQL: mid-level
-- Scikit-Learn, FastAPI/Flask, PyTorch: Grundlagen
-
-Keine Produktionserfahrung mit: Spark, Kafka, Airflow, dbt — Konzepte bekannt
-
-Präferenzen:
-- Standort Köln; Hybrid oder Onsite bevorzugt, reines Remote eher unerwünscht
-- Festanstellung oder Freelance
-- Data Engineering Fokus bevorzugt; DS/ML-Anteile in Ordnung; Deep Learning eher unpassend
-- Zeitarbeit / Personalvermittler (z.B. FERCHAU, Hays, Gulp) negativ bewerten
-- Deutsch oder Englisch beide okay
-
-Scoring-Leitfaden:
-5 = DE-Rolle, Stack passt stark (Python, SQL, Docker, Cloud, Linux), Köln/hybrid, Direktanstellung
-4 = passt gut, kleinere Lücken im Stack oder leicht erhöhte Seniority-Erwartung
-3 = grundsätzlich passend aber nennenswerte Lücken (z.B. Spark-heavy, viel DL) oder Zeitarbeit
-2 = eher unpassend (falscher Stack, reines ML/DL, reines Remote, sehr hohe Seniority)
-1 = nicht passend (komplett anderes Feld, nur Senior+, nur DL)
+{fit_score_context}
 """
 
 
-def analyze(text: str, api_key: str = "") -> dict:
+def analyze(text: str, api_key: str = "", profile_text: str = "", fit_score_context: str = "") -> dict:
     """Analysiert einen Stellentext via LLM. Fällt auf Stub zurück wenn kein API-Key."""
     if not api_key:
         logger.warning("Kein API-Key gesetzt, verwende Stub.")
         return _stub()
+
+    prompt = _PROMPT_TEMPLATE.format(
+        text=text,
+        profile_text=profile_text,
+        fit_score_context=fit_score_context,
+    )
 
     try:
         import anthropic
@@ -66,7 +47,7 @@ def analyze(text: str, api_key: str = "") -> dict:
         message = client.messages.create(
             model="claude-haiku-4-5",
             max_tokens=1024,
-            messages=[{"role": "user", "content": PROMPT_TEMPLATE.format(text=text)}],
+            messages=[{"role": "user", "content": prompt}],
         )
         raw = message.content[0].text
         if raw.startswith("```"):

@@ -4,13 +4,17 @@ from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 
-from job_radar.config import ArbeitnowConfig
+from job_radar.config import ArbeitnowConfig, SearchProfile
 
 logger = logging.getLogger(__name__)
 
 
-def fetch_job_list(config: ArbeitnowConfig) -> list[dict]:
-    """Fetches and filters job listings from the Arbeitnow API."""
+def fetch_job_list(config: ArbeitnowConfig, search_profile: SearchProfile) -> list[dict]:
+    """Fetches and filters job listings from the Arbeitnow API.
+
+    Filtering is delegated to the SearchProfile so that location and title
+    criteria are profile-specific rather than hardcoded in the source.
+    """
     location_matched: list[dict] = []
 
     for page in range(1, config.max_pages + 1):
@@ -21,12 +25,12 @@ def fetch_job_list(config: ArbeitnowConfig) -> list[dict]:
 
         for job in jobs:
             normalized = _normalize(job)
-            if config.matches_location(normalized):
+            if search_profile.matches_location(normalized):
                 location_matched.append(normalized)
 
         logger.info("Arbeitnow: Seite %d — %d Jobs geladen", page, len(jobs))
 
-    results = [job for job in location_matched if config.matches_title(job)]
+    results = [job for job in location_matched if search_profile.matches_title(job)]
     dropped = len(location_matched) - len(results)
     if dropped:
         logger.info("Arbeitnow: %d Jobs durch Titel-Filter entfernt", dropped)
