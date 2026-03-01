@@ -62,6 +62,7 @@ search_profiles:
       1 = nicht passend (komplett anderes Feld, nur Senior+, nur DL)
 
   - name: remote_de
+    enabled: false
     remote_only: true
     location_filter: []
     arbeitsagentur_queries:

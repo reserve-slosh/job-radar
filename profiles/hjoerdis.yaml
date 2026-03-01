@@ -68,6 +68,7 @@ search_profiles:
     fit_score_context: ""  # TODO: mit Hjördis ausarbeiten
 
   - name: remote_de
+    enabled: false
     remote_only: true
     location_filter: []
     arbeitsagentur_queries:
