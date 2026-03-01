@@ -46,7 +46,7 @@ def _load_jobs(db_path: str, filters: dict) -> list[dict]:
                vertragsart, bewerbung_status, search_profile, source,
                zusammenfassung, tech_stack, eintrittsdatum, veroeffentlicht_am,
                bewerbung_entwurf, bewerbung_quellen, duplicate_of, fetched_at,
-               titel_normalisiert
+               titel_normalisiert, raw_text
         FROM jobs
         WHERE 1=1
     """
