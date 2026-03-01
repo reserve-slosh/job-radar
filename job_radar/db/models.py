@@ -25,6 +25,10 @@ class Job:
     source: str = "arbeitsagentur"
     search_profile: str = "koeln"
     fetched_at: str = ""
+    bewerbung_entwurf: str | None = None
+    bewerbung_status: str | None = None
+    bewerbung_quellen: str | None = None  # JSON-Array von URLs
+    duplicate_of: str | None = None       # refnr des Original-Jobs
 
     def __post_init__(self):
         if not self.fetched_at:
@@ -37,6 +41,7 @@ class PipelineRun:
     started_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
     finished_at: str | None = None
     source: str = ""
+    search_profile: str = ""
     jobs_fetched: int = 0
     jobs_new: int = 0
     jobs_updated: int = 0
@@ -84,43 +89,55 @@ def init_db(db_path: str) -> None:
                 fetched_at TEXT,
                 bewerbung_entwurf TEXT,
                 bewerbung_status TEXT,
-                search_profile TEXT DEFAULT 'koeln'
+                search_profile TEXT DEFAULT 'koeln',
+                bewerbung_quellen TEXT,
+                duplicate_of TEXT REFERENCES jobs(refnr)
             )
         """)
-        try:
-            conn.execute("ALTER TABLE jobs ADD COLUMN bewerbung_entwurf TEXT")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE jobs ADD COLUMN bewerbung_status TEXT")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute("ALTER TABLE jobs ADD COLUMN search_profile TEXT DEFAULT 'koeln'")
-        except sqlite3.OperationalError:
-            pass
+        # Idempotent migrations for existing databases
+        _add_column(conn, "jobs", "bewerbung_entwurf", "TEXT")
+        _add_column(conn, "jobs", "bewerbung_status", "TEXT")
+        _add_column(conn, "jobs", "search_profile", "TEXT DEFAULT 'koeln'")
+        _add_column(conn, "jobs", "bewerbung_quellen", "TEXT")
+        _add_column(conn, "jobs", "duplicate_of", "TEXT")
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS runs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 started_at TEXT NOT NULL,
                 finished_at TEXT,
                 source TEXT NOT NULL,
+                search_profile TEXT DEFAULT 'koeln',
                 jobs_fetched INTEGER DEFAULT 0,
                 jobs_new INTEGER DEFAULT 0,
                 jobs_updated INTEGER DEFAULT 0,
                 jobs_skipped INTEGER DEFAULT 0,
                 jobs_failed INTEGER DEFAULT 0,
                 status TEXT NOT NULL DEFAULT 'running',
-                error_msg TEXT,
-                search_profile TEXT DEFAULT 'koeln'
+                error_msg TEXT
             )
         """)
-        try:
-            conn.execute("ALTER TABLE runs ADD COLUMN search_profile TEXT DEFAULT 'koeln'")
-        except sqlite3.OperationalError:
-            pass
+        _add_column(conn, "runs", "search_profile", "TEXT DEFAULT 'koeln'")
+
         conn.execute("UPDATE jobs SET search_profile = 'koeln' WHERE search_profile IS NULL")
         conn.execute("UPDATE runs SET search_profile = 'koeln' WHERE search_profile IS NULL")
+
+
+def _add_column(conn: sqlite3.Connection, table: str, column: str, col_type: str) -> None:
+    """Adds a column to a table if it doesn't already exist."""
+    try:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+
+def get_job_url(refnr: str, source: str) -> str | None:
+    """Constructs a direct link to the job posting based on source."""
+    if source == "arbeitsagentur":
+        return f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{refnr}"
+    if source == "arbeitnow":
+        return f"https://www.arbeitnow.com/jobs/{refnr}"
+    return None
 
 
 def get_modifikations_timestamp(db_path: str, refnr: str) -> str | None:
@@ -146,14 +163,15 @@ def insert_job(db_path: str, job: Job) -> None:
                 refnr, titel, arbeitgeber, ort, eintrittsdatum,
                 veroeffentlicht_am, raw_text, llm_output, titel_normalisiert,
                 remote, vertragsart, seniority, tech_stack, zusammenfassung,
-                fit_score, modifikations_timestamp, source, fetched_at
+                fit_score, modifikations_timestamp, source, fetched_at, search_profile
             ) VALUES (
                 :refnr, :titel, :arbeitgeber, :ort, :eintrittsdatum,
                 :veroeffentlicht_am, :raw_text, :llm_output, :titel_normalisiert,
                 :remote, :vertragsart, :seniority, :tech_stack, :zusammenfassung,
-                :fit_score, :modifikations_timestamp, :source, :fetched_at
+                :fit_score, :modifikations_timestamp, :source, :fetched_at, :search_profile
             )
         """, job.__dict__)
+
 
 def update_job(db_path: str, job: Job) -> None:
     with get_connection(db_path) as conn:
@@ -185,12 +203,16 @@ def update_bewerbung(
     *,
     entwurf: str | None = None,
     status: str | None = None,
+    quellen: str | None = None,
 ) -> None:
+    """Updates application-related fields for a job. Only non-None values are written."""
     updates: dict[str, str] = {}
     if entwurf is not None:
         updates["bewerbung_entwurf"] = entwurf
     if status is not None:
         updates["bewerbung_status"] = status
+    if quellen is not None:
+        updates["bewerbung_quellen"] = quellen
     if not updates:
         return
     set_clause = ", ".join(f"{col} = :{col}" for col in updates)
@@ -205,11 +227,11 @@ def insert_run(db_path: str, run: PipelineRun) -> int:
     with get_connection(db_path) as conn:
         cursor = conn.execute("""
             INSERT INTO runs (
-                started_at, finished_at, source,
+                started_at, finished_at, source, search_profile,
                 jobs_fetched, jobs_new, jobs_updated, jobs_skipped,
                 status, error_msg
             ) VALUES (
-                :started_at, :finished_at, :source,
+                :started_at, :finished_at, :source, :search_profile,
                 :jobs_fetched, :jobs_new, :jobs_updated, :jobs_skipped,
                 :status, :error_msg
             )
