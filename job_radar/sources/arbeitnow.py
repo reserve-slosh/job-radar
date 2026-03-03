@@ -16,25 +16,29 @@ def fetch_job_list(config: ArbeitnowConfig, search_profile: SearchProfile) -> li
     criteria are profile-specific rather than hardcoded in the source.
     """
     location_matched: list[dict] = []
+    pages_fetched = 0
+    total_fetched = 0
 
     for page in range(1, config.max_pages + 1):
         jobs = _fetch_page(config.base_url, page)
         if not jobs:
-            logger.info("Arbeitnow: keine weiteren Ergebnisse auf Seite %d", page)
+            logger.debug("Arbeitnow: keine weiteren Ergebnisse auf Seite %d", page)
             break
+
+        pages_fetched += 1
+        total_fetched += len(jobs)
+        logger.info("Arbeitnow | Seite %d | %d Einträge", page, len(jobs))
 
         for job in jobs:
             normalized = _normalize(job)
             if search_profile.matches_location(normalized):
                 location_matched.append(normalized)
 
-        logger.info("Arbeitnow: Seite %d — %d Jobs geladen", page, len(jobs))
-
     results = [job for job in location_matched if search_profile.matches_title(job)]
-    dropped = len(location_matched) - len(results)
-    if dropped:
-        logger.info("Arbeitnow: %d Jobs durch Titel-Filter entfernt", dropped)
-    logger.info("Arbeitnow: %d Jobs nach allen Filtern", len(results))
+    logger.info(
+        "Arbeitnow | Fertig: %d Seiten | %d gesamt | %d nach Filter",
+        pages_fetched, total_fetched, len(results),
+    )
     return results
 
 

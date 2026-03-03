@@ -14,9 +14,15 @@ from job_radar.sources.arbeitnow import fetch_job_list as fetch_arbeitnow_jobs
 from job_radar.pipeline.extractor import build_job
 from job_radar.pipeline.analyzer import analyze
 
-_LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s — %(message)s"
+_CONSOLE_FORMAT = "%(levelname)s %(message)s"
+_FILE_FORMAT = "%(asctime)s %(levelname)s %(name)s — %(message)s"
 
-logging.basicConfig(level=logging.INFO, format=_LOG_FORMAT)
+_root_logger = logging.getLogger()
+_root_logger.setLevel(logging.INFO)
+
+_console_handler = logging.StreamHandler()
+_console_handler.setFormatter(logging.Formatter(_CONSOLE_FORMAT))
+_root_logger.addHandler(_console_handler)
 
 _log_dir = Path(__file__).resolve().parent.parent / "logs"
 _log_dir.mkdir(exist_ok=True)
@@ -25,8 +31,8 @@ _file_handler = logging.handlers.RotatingFileHandler(
     maxBytes=5 * 1024 * 1024,
     backupCount=3,
 )
-_file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-logging.getLogger().addHandler(_file_handler)
+_file_handler.setFormatter(logging.Formatter(_FILE_FORMAT))
+_root_logger.addHandler(_file_handler)
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +71,7 @@ def _process_batch(
                 logger.debug("Übersprungen (unverändert): %s", refnr)
                 skipped += 1
                 continue
-            logger.info("Geändert, re-analysiere: %s", refnr)
+            logger.debug("Geändert, re-analysiere: %s", refnr)
 
         job = build_job(raw, source=source, remote_hint=bool(raw.get("remote", False)))
         if job is None:
@@ -97,11 +103,11 @@ def _process_batch(
 
         if is_existing:
             update_job(config.db_path, job)
-            logger.info("Aktualisiert: %s — %s", refnr, job.titel)
+            logger.debug("Aktualisiert: %s — %s", refnr, job.titel)
             reanalyzed += 1
         else:
             insert_job(config.db_path, job)
-            logger.info("Neu gespeichert: %s — %s", refnr, job.titel)
+            logger.debug("Neu gespeichert: %s — %s", refnr, job.titel)
             new += 1
 
     return new, skipped, reanalyzed, failed
@@ -115,7 +121,6 @@ def _run_profile(
 ) -> None:
     """Runs the full pipeline for one candidate × search_profile combination."""
     profile_key = f"{candidate.name}_{search_profile.name}"
-    logger.info("=== Profil: %s ===", profile_key)
 
     if not candidate.profile_text.strip():
         logger.warning(
@@ -128,15 +133,18 @@ def _run_profile(
     )
 
     try:
-        logger.info("--- Quelle: Arbeitsagentur ---")
         aa_jobs = fetch_arbeitsagentur_jobs(config.arbeitsamt, search_profile)
-        logger.info("%d Jobs gefunden", len(aa_jobs))
         aa = _process_batch(aa_jobs, "arbeitsagentur", config, candidate, search_profile, no_llm)
+        aa_new, aa_skipped, aa_reanalyzed, aa_failed = aa
+        n_queries = len(search_profile.get_arbeitsagentur_queries())
+        logger.info(
+            "Arbeitsagentur | Fertig: %d Queries | %d gesamt | %d nach Filter",
+            n_queries, len(aa_jobs), aa_new + aa_reanalyzed,
+        )
 
-        logger.info("--- Quelle: Arbeitnow ---")
         an_jobs = fetch_arbeitnow_jobs(config.arbeitnow, search_profile)
-        logger.info("%d Jobs gefunden", len(an_jobs))
         an = _process_batch(an_jobs, "arbeitnow", config, candidate, search_profile, no_llm)
+        an_new, an_skipped, an_reanalyzed, an_failed = an
 
         seen_refnrs = {
             raw.get("refnr")
@@ -147,31 +155,23 @@ def _run_profile(
         if filled_count:
             logger.info("[%s] %d Jobs als vermutlich besetzt markiert.", profile_key, filled_count)
 
-        aa_new, aa_skipped, aa_reanalyzed, aa_failed = aa
-        an_new, an_skipped, an_reanalyzed, an_failed = an
-        totals = tuple(x + y for x, y in zip(aa, an))
-
+        total_new = aa_new + an_new
+        total_skipped = aa_skipped + an_skipped
+        total_reanalyzed = aa_reanalyzed + an_reanalyzed
+        total_failed = aa_failed + an_failed
         logger.info(
-            "[%s] Arbeitsagentur — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-            profile_key, *aa,
-        )
-        logger.info(
-            "[%s] Arbeitnow     — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-            profile_key, *an,
-        )
-        logger.info(
-            "[%s] Gesamt        — Neu: %d, Übersprungen: %d, Re-analysiert: %d, Fehlgeschlagen: %d",
-            profile_key, *totals,
+            "[%s] Neu: %d | Übersprungen: %d | Re-analysiert: %d | Fehlgeschlagen: %d",
+            profile_key, total_new, total_skipped, total_reanalyzed, total_failed,
         )
 
         finish_run(
             config.db_path,
             run_id,
             jobs_fetched=len(aa_jobs) + len(an_jobs),
-            jobs_new=aa_new + an_new,
-            jobs_updated=aa_reanalyzed + an_reanalyzed,
-            jobs_skipped=aa_skipped + an_skipped,
-            jobs_failed=aa_failed + an_failed,
+            jobs_new=total_new,
+            jobs_updated=total_reanalyzed,
+            jobs_skipped=total_skipped,
+            jobs_failed=total_failed,
             status="success",
         )
 

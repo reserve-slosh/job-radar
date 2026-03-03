@@ -33,20 +33,20 @@ def fetch_job_list(config: ArbeitsamtConfig, search_profile: SearchProfile) -> l
                 logger.error("Fehler bei Query '%s' Seite %d: %s", was, page, e)
                 break
 
-            logger.debug("AA query '%s' Seite %d — %d Ergebnisse", was, page, len(jobs))
             time.sleep(1)
 
             if not jobs:
                 break
 
+            logger.info("Arbeitsagentur | %-20s | Seite %d | %d Einträge", was, page, len(jobs))
             for job in jobs:
                 refnr = job.get("refnr")
                 if refnr:
                     collected[refnr] = job
 
-    results = list(collected.values())
-    logger.info("Arbeitsagentur: %d eindeutige Jobs gesammelt", len(results))
-    return results
+        logger.info("Arbeitsagentur | %s | abgeschlossen.", was)
+
+    return list(collected.values())
 
 
 def fetch_job_detail(refnr: str) -> str | None:
