@@ -45,7 +45,7 @@ def _load_jobs(db_path: str, filters: dict) -> list[dict]:
         SELECT refnr, titel, arbeitgeber, ort, fit_score, seniority, remote,
                vertragsart, bewerbung_status, search_profile, source,
                zusammenfassung, tech_stack, eintrittsdatum, veroeffentlicht_am,
-               bewerbung_entwurf, bewerbung_quellen, duplicate_of, fetched_at,
+               bewerbung_entwurf, bewerbung_quellen, bewerbung_analyse, duplicate_of, fetched_at,
                titel_normalisiert, raw_text
         FROM jobs
         WHERE 1=1
@@ -230,6 +230,34 @@ def _render_detail_tab(config: Config) -> None:
     if job.get("duplicate_of"):
         st.warning(f"🔁 Mögliches Duplikat von `{job['duplicate_of']}`")
 
+    # Job JSON download — always available
+    arbeitgeber_slug = (job["arbeitgeber"] or "unbekannt").lower().replace(" ", "_")[:30]
+    llm_extra = {}
+    if job.get("bewerbung_analyse"):
+        try:
+            llm = json.loads(job["bewerbung_analyse"])
+            llm_extra = {
+                "analyse": llm.get("analyse"),
+                "unternehmens_satz": llm.get("unternehmens_satz"),
+                "kurzprofil": llm.get("kurzprofil"),
+            }
+        except (json.JSONDecodeError, TypeError):
+            pass
+    job_json = json.dumps({
+        k: job[k] for k in (
+            "refnr", "titel", "arbeitgeber", "ort", "fit_score",
+            "seniority", "remote", "vertragsart", "zusammenfassung",
+            "tech_stack", "eintrittsdatum", "veroeffentlicht_am",
+            "search_profile", "source",
+        )
+    } | llm_extra, ensure_ascii=False, indent=2)
+    st.download_button(
+        label="⬇️ Job als .json",
+        data=job_json,
+        file_name=f"job_{arbeitgeber_slug}.json",
+        mime="application/json",
+    )
+
     st.divider()
 
     # Zusammenfassung & Tech Stack
@@ -253,14 +281,44 @@ def _render_detail_tab(config: Config) -> None:
 
     st.divider()
 
-    # Web Search Quellen
+    # LLM Analyse & Recherche
+    if job.get("bewerbung_analyse"):
+        try:
+            llm = json.loads(job["bewerbung_analyse"])
+            analyse = llm.get("analyse")
+            unternehmens_satz = llm.get("unternehmens_satz")
+            if analyse or unternehmens_satz:
+                with st.expander("🔍 LLM-Analyse"):
+                    if unternehmens_satz:
+                        st.markdown("**Unternehmensbezug im Brief**")
+                        st.info(unternehmens_satz)
+                    kurzprofil = llm.get("kurzprofil")
+                    if kurzprofil:
+                        st.markdown("**Kurzprofil-Vorschlag**")
+                        st.info(kurzprofil)
+                    if analyse:
+                        if analyse.get("unternehmens_differenziator"):
+                            st.markdown("**Differenziator**")
+                            st.write(analyse["unternehmens_differenziator"])
+                        if analyse.get("gewaehlte_erfahrungen"):
+                            st.markdown("**Gewählte Erfahrungen**")
+                            st.write(", ".join(analyse["gewaehlte_erfahrungen"]))
+                        if analyse.get("weggelassen"):
+                            st.markdown("**Weggelassen**")
+                            st.write(analyse["weggelassen"])
+                        if analyse.get("stil_begruendung"):
+                            st.markdown("**Stil-Entscheidung**")
+                            st.write(analyse["stil_begruendung"])
+        except (json.JSONDecodeError, TypeError):
+            pass
+
     if job.get("bewerbung_quellen"):
         try:
             quellen = json.loads(job["bewerbung_quellen"])
             if quellen:
-                st.markdown("**Recherche-Quellen (Web Search)**")
-                for url_q in quellen:
-                    st.markdown(f"- {url_q}")
+                with st.expander("🌐 Recherche-Quellen (Web Search)"):
+                    for url_q in quellen:
+                        st.markdown(f"- {url_q}")
         except (json.JSONDecodeError, TypeError):
             pass
 
@@ -298,11 +356,10 @@ def _render_detail_tab(config: Config) -> None:
         st.divider()
         st.markdown("**Vorhandener Entwurf**")
         arbeitgeber_slug = (job["arbeitgeber"] or "unbekannt").lower().replace(" ", "_")[:30]
-        filename = f"anschreiben_{arbeitgeber_slug}.tex"
         st.download_button(
             label="⬇️ .tex herunterladen",
             data=job["bewerbung_entwurf"],
-            file_name=filename,
+            file_name=f"anschreiben_{arbeitgeber_slug}.tex",
             mime="text/plain",
         )
 
@@ -345,6 +402,7 @@ def _generate_cover_letter(config: Config, job: dict, candidate_name: str) -> No
                 entwurf=tex,
                 status="entwurf",
                 quellen=json.dumps(sources) if sources else None,
+                analyse=json.dumps(values),
             )
             st.success(f"Entwurf erstellt (Stil {values.get('stil', '?')}). Seite neu laden für Download.")
             st.rerun()

@@ -27,7 +27,8 @@ class Job:
     fetched_at: str = ""
     bewerbung_entwurf: str | None = None
     bewerbung_status: str | None = None
-    bewerbung_quellen: str | None = None  # JSON-Array von URLs
+    bewerbung_quellen: str | None = None   # JSON-Array von URLs
+    bewerbung_analyse: str | None = None  # JSON-Output des Bewerbungsassistenten
     duplicate_of: str | None = None       # refnr des Original-Jobs
     job_status: str = "active"
     status_updated_at: str | None = None
@@ -93,6 +94,7 @@ def init_db(db_path: str) -> None:
                 bewerbung_status TEXT,
                 search_profile TEXT DEFAULT '',
                 bewerbung_quellen TEXT,
+                bewerbung_analyse TEXT,
                 duplicate_of TEXT REFERENCES jobs(refnr),
                 job_status TEXT DEFAULT 'active',
                 status_updated_at TEXT
@@ -103,6 +105,7 @@ def init_db(db_path: str) -> None:
         _add_column(conn, "jobs", "bewerbung_status", "TEXT")
         _add_column(conn, "jobs", "search_profile", "TEXT DEFAULT ''")
         _add_column(conn, "jobs", "bewerbung_quellen", "TEXT")
+        _add_column(conn, "jobs", "bewerbung_analyse", "TEXT")
         _add_column(conn, "jobs", "duplicate_of", "TEXT")
         _add_column(conn, "jobs", "job_status", "TEXT DEFAULT 'active'")
         _add_column(conn, "jobs", "status_updated_at", "TEXT")
@@ -209,6 +212,7 @@ def update_bewerbung(
     entwurf: str | None = None,
     status: str | None = None,
     quellen: str | None = None,
+    analyse: str | None = None,
 ) -> None:
     """Updates application-related fields for a job. Only non-None values are written."""
     updates: dict[str, str] = {}
@@ -218,6 +222,8 @@ def update_bewerbung(
         updates["bewerbung_status"] = status
     if quellen is not None:
         updates["bewerbung_quellen"] = quellen
+    if analyse is not None:
+        updates["bewerbung_analyse"] = analyse
     if not updates:
         return
     set_clause = ", ".join(f"{col} = :{col}" for col in updates)

@@ -27,7 +27,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 _MODEL = "claude-sonnet-4-20250514"
-_THINKING_BUDGET = 3000  # Token-Budget für Reasoning
+_THINKING_BUDGET = 10000  # Token-Budget für Reasoning
 _PLACEHOLDERS = ["BETREFF", "ANREDE", "BODY", "GRUSSFORMEL"]
 _LATEX_ESCAPE = {
     "&": r"\&",
@@ -75,34 +75,110 @@ def _build_prompt(profile: str, job: dict) -> str:
 # Stellenanzeige
 {job_context}
 
-# Recherche
-Recherchiere das Unternehmen kurz mit Web Search, bevor du schreibst.
-Nutze ausschließlich: offizielle Unternehmenswebsite, LinkedIn Company Page, Kununu.
-Keine Jobbörsen, keine anonymen Blogs.
-Wenn du keine spezifischen, verlässlichen Infos findest: schreib einen kurzen, ehrlichen Satz
-statt eines generischen Absatzes. Erfinde nichts.
+---
 
-# Aufgabe
-Schreib ein Anschreiben im Stil eines der beiden Referenz-Anschreiben aus dem Profil.
+Arbeite die folgenden drei Phasen strikt in dieser Reihenfolge ab.
+Das Ergebnis jeder Phase fließt in die nächste ein.
 
-Entscheide zuerst: Welches Referenz-Anschreiben passt besser zur Unternehmenskultur?
-- Anschreiben A (Qimia): etablierte Unternehmen, Beratungen, Konzerne, traditionelle Kultur
-- Anschreiben B (taod): Startups, moderne Tech-Firmen, Du-Kultur, flache Hierarchien
+---
 
-Orientiere dich eng am gewählten Referenz-Anschreiben: gleiche Satzstruktur, gleiche Rhythmik,
-gleiche Art Projekte zu beschreiben. Ersetze nur die unternehmensspezifischen und
-jobspezifischen Teile durch passende Inhalte aus der Stellenanzeige und deiner Recherche.
+## Phase 1: Recherche
 
-Weitere Regeln:
+Führe mehrere gezielte Web Searches durch. Suche nicht nur die erste offensichtliche Quelle —
+plane deine Searches bewusst und priorisiere nach folgendem Schema:
+
+1. **Unternehmenskultur und Arbeitsweise** (Kununu, "Über uns", Karriereseite, Glassdoor)
+   Ziel: Gibt es konkrete Aussagen zu Teamstruktur, Arbeitsweise, Werten — jenseits von Marketing?
+   Wertlos: "Wir sind ein innovatives Unternehmen", "Work-Life-Balance ist uns wichtig"
+
+2. **Tech Stack und Engineering-Praxis** (Engineering Blog, GitHub, Konferenzauftritte, Stellenanzeigen)
+   Ziel: Welche Technologien werden produktiv eingesetzt? Gibt es öffentliche technische Inhalte?
+
+3. **Marktpositionierung** (Website, LinkedIn, Pressemitteilungen, Branchen-Coverage)
+   Ziel: Was unterscheidet dieses Unternehmen konkret von vergleichbaren Firmen in dieser Nische?
+   Wertlos: Unternehmensgröße, Gründungsjahr, allgemeine Branchenzugehörigkeit
+
+Wenn eine Kategorie nichts Verwertbares liefert: notiere das explizit. Nicht auffüllen.
+
+---
+
+## Phase 2: Analyse
+
+Entscheide auf Basis der Recherche und der Stellenanzeige:
+
+- **unternehmens_differenziator**: Was macht dieses Unternehmen und diese Stelle konkret anders
+  als eine vergleichbare Stelle bei einem anderen Arbeitgeber? Ein Satz, der *nur hier* gilt.
+  Wenn du das nicht belegen kannst: Wert = null.
+
+- **unternehmens_satz**: Der Satz der im Anschreiben verwendet wird um den Unternehmensbezug
+  herzustellen. Muss aus der Recherche ableitbar sein — keine Unternehmenslobby, keine
+  generischen Attribute. Wenn kein belegbarer Satz möglich ist: Wert = null, kein
+  Unternehmensabsatz im Brief.
+
+- **gewaehlte_erfahrungen**: Wähle 1–2 der folgenden Erfahrungen aus die für diese Stelle
+  am stärksten relevant sind. Die anderen fallen weg oder werden maximal in einem Nebensatz erwähnt:
+  - "pipeline": Freiberufliches Datenpipeline-Projekt (Scraping, ETL, Docker, Google Cloud)
+  - "geomar": GEOMAR (Automatisierung, Benchmarking, interdisziplinäre Kommunikation)
+  - "thesis": Masterarbeit (modulares Python-Package, Routenoptimierung, Testsuite)
+
+- **weggelassen**: Welche Erfahrung wurde weggelassen und warum?
+
+- **stil**: "A" (Qimia — formal, Sie-Form, konservativ) oder "B" (taod — locker, Du-Form, Startup)
+  Entscheide nach Unternehmenskultur aus der Recherche.
+  Faustregel: Beratungsunternehmen, AGs, Konzerne, etablierte Mittelständler → Stil A.
+  Stil B nur wenn die Recherche explizit auf flache Hierarchien, Du-Kultur oder Startup-Umfeld hinweist.
+
+- **stil_begruendung**: Ein Satz warum.
+
+---
+
+## Phase 3: Anschreiben schreiben
+
+Schreib das Anschreiben auf Basis von Phase 1 und Phase 2.
+
+**Stil:**
+Orientiere dich am gewählten Referenz-Anschreiben (A oder B) aus dem Kandidatenprofil:
+gleiche Satzstruktur, gleiche Rhythmik, gleiche Art Projekte zu beschreiben.
+Ersetze nur die stellen- und unternehmensspezifischen Teile.
+
+**Tonalität:**
+Lies jeden Satz mit dieser Frage: "Könnte dieser Satz in jeder Bewerbung stehen?"
+Wenn ja — schreib ihn um bis er nur hier passt, oder streiche ihn.
+Keine Konjunktiv-Weichspüler ("könnte", "würde", "wäre").
+
+**Verbotene Phrasen und Muster** (wörtlich oder sinngemäß):
+- "technische Exzellenz und Kundenorientierung" oder ähnliche Doppel-Attribute
+- "die Brücke zwischen Technik und Fachlichkeit schlagen"
+- "ich bin überzeugt, dass ich mich schnell in jeden Stack einarbeiten kann"
+- "ob als direkter Einstieg oder im Rahmen von..."
+- "intrinsisch motiviert" / "intrinsisch motivieren"
+- "was mich am stärksten interessiert hat, war das Bauen"
+- "wertebasierte Kultur"
+- "strukturiert aufzubauen und wartbar zu halten"
+- "Stakeholder" — stattdessen konkret: "Fachbereiche", "Forschende", "Kunden" etc.
 - Kein Floskeln-Einstieg ("Hiermit bewerbe ich mich", "Mit großem Interesse")
+- Stack-Disclaimer nicht als eigener Absatz — maximal ein eingebetteter Satz, nur wenn der
+  fehlende Stack zentral und prominent in der Stelle ist
+- Der `unternehmens_satz` darf kein isolierter Absatz sein — er muss in einen anderen
+  Absatz integriert werden, als Teil eines Gedankens, nicht als Einschub
+
+**Struktur:**
+- 3–4 Absätze
 - Jede Aussage hat einen konkreten Beleg oder Kontext
-- Lücken im Tech Stack nur nennen wenn sie zentral und prominent in der Stelle sind
-- Niemals generische Unternehmenslobby ("technische Tiefe und Kundenorientierung" o.ä.)
 - Keine Citation-Tags, keine Quellenverweise im Text — nur plain text
-- Länge: 3–4 Absätze, nicht mehr
+
+---
 
 Antworte ausschließlich mit einem JSON-Objekt, keine Erklärungen, kein Markdown:
 {{
+  "analyse": {{
+    "unternehmens_differenziator": "... oder null",
+    "gewaehlte_erfahrungen": ["pipeline", "geomar"],
+    "weggelassen": "thesis — zu wenig Relevanz für diese Stelle weil ...",
+    "stil_begruendung": "..."
+  }},
+  "unternehmens_satz": "... oder null",
+  "kurzprofil": "2–3 Sätze, plain text, passend zur Stelle und Unternehmenskultur. Kein LaTeX. Tonalität wie das Kurzprofil im Kandidatenprofil. Variiert je nach Fokus: DE-Stelle → Pipeline/Cloud/Deployment; AI-Stelle → LLM-Engineering/Anthropic API/job-radar.",
   "stil": "A" oder "B",
   "BETREFF_ZUSATZ": "exakte Berufsbezeichnung aus der Anzeige (m/w/d)",
   "ANREDE": "Sehr geehrte Damen und Herren," oder "Hallo [Team/Unternehmen]," je nach Stil,
@@ -115,7 +191,7 @@ def _call_sonnet(prompt: str, api_key: str) -> tuple[dict, list[str]]:
     client = anthropic.Anthropic(api_key=api_key)
     message = client.beta.messages.create(
         model=_MODEL,
-        max_tokens=_THINKING_BUDGET + 1500,
+        max_tokens=_THINKING_BUDGET + 6000,
         thinking={"type": "enabled", "budget_tokens": _THINKING_BUDGET},
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[{"role": "user", "content": prompt}],
@@ -292,6 +368,7 @@ def main() -> None:
         entwurf=tex,
         status="entwurf",
         quellen=json.dumps(sources) if sources else None,
+        analyse=json.dumps(values),
     )
     logger.info("bewerbung_status auf 'entwurf' gesetzt")
 
