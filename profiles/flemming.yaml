@@ -17,6 +17,50 @@ profile_text: |
 
   Keine Produktionserfahrung mit: Spark, Kafka, Airflow, dbt — Konzepte bekannt
 
+  ---
+
+  Anschreiben-Vorlagen:
+
+  Vorlage A (Qimia) — Stil: formal, Sie-Form, konservativ, selbstbewusst-sachlich:
+  ---
+  Sehr geehrte Damen und Herren,
+
+  ich habe meinen Master in Data Science im Februar 2025 abgeschlossen und suche nun den Einstieg in ein Umfeld, das mit echten Datenproblemen arbeitet. Qimia spricht mich an, weil das Unternehmen beides verbindet: technisch anspruchsvolle Projektarbeit und ein klares Interesse daran, Mitarbeiterinnen und Mitarbeiter weiterzuentwickeln.
+
+  Was mich im Laufe des Studiums am stärksten interessiert hat, war weniger die Modellierung als das Bauen: robuste Pipelines, saubere Systemarchitektur, Automatisierung von Prozessen, die vorher manuell oder gar nicht liefen. Data Engineering ist der Bereich, der das am direktesten erfüllt. Ich betreibe privat einen eigenen Homeserver, weil mich Deployment, Monitoring und Systemwartung intrinsisch motivieren und mir die Arbeit, Dinge zuverlässig im Hintergrund laufen zu lassen, echten Spaß macht.
+
+  In meiner Masterarbeit habe ich ein vollständiges Python-Package zur Routenoptimierung für autonome Unterwasserfahrzeuge entwickelt: mit eigenem src-Layout, getrennten Modulen für Routing, Environment, IO und Visualisierung sowie einer vollständigen Testsuite. Mehrere Solver-Familien wurden unter operativen und umweltbedingten Constraints systematisch bewertet. Das Package ist modular aufgebaut, sodass andere Forschende damit weiterarbeiten können.
+
+  Produktionserfahrung habe ich durch zwei freiberufliche Projekte für ein Medienunternehmen gesammelt, zu dem ich über ein Studienprojekt Kontakt aufgebaut hatte. Der wesentliche Auftrag war eine automatisierte Event-Datenpipeline: Scraping, Normalisierung, Deduplizierung, Persistierung in PostgreSQL, containerisiert mit Docker, betrieben in der Google Cloud und auf einem Hetzner-Server. Deployment, Monitoring und Wartung habe ich eigenständig verantwortet. Ein zweites Projekt bestand im Troubleshooting und Redeployment einer Anwendung, die fehlerhaft in Betrieb genommen worden war.
+
+  Am GEOMAR habe ich Python-basierte Auswertungsprozesse automatisiert und Ergebnisse für eine interdisziplinäre Forschungsgruppe aufbereitet, mit dem Anspruch, algorithmisch komplexe Zusammenhänge auch für Forschende außerhalb der Informatik verständlich zu machen. Außerdem habe ich den Kontakt zwischen dem AUV-Team meiner Hochschule und dem entsprechenden Team am GEOMAR initiiert, weil ich eine fachlich sinnvolle Verbindung gesehen habe.
+
+  Mit Spark, Kafka und vergleichbaren Systemen habe ich bislang keine Produktionserfahrung. Die zugrundeliegenden Konzepte verteilter Verarbeitung kenne ich aus dem Studium und habe mich darüber hinaus autodidaktisch damit beschäftigt. Ich bin überzeugt, dass ich mich in jeden konkreten Stack schnell einarbeiten kann, sobald ich weiß, wofür ich es tue. Ich bringe ein solides Python-Fundament, Erfahrung mit Cloud-Deployment und Linux sowie die Fähigkeit, Systeme strukturiert aufzubauen und wartbar zu halten. Ob als direkter Einstieg oder im Rahmen Ihres Trainingsprogramms, ich bin für beides offen.
+
+  Ich würde mich über ein Gespräch freuen.
+
+  Mit freundlichen Grüßen
+  Flemming Reese
+  ---
+
+  Vorlage B (taod) — Stil: locker, Du-Form, progressiv/Startup, direkt-offensiv:
+  ---
+  Hallo taod Team,
+
+  ich bewerbe mich als Junior Data Engineer bei euch. Der Mix aus Cloud-Datenprojekten, Datenintegration und Kundenarbeit passt sehr gut zu dem, was ich in den letzten Projekten gemacht habe und worauf ich mich weiter spezialisieren möchte: robuste Datenprozesse bauen, die im Alltag wirklich funktionieren – und das im Austausch mit Stakeholdern.
+
+  Ich habe im Februar 2025 meinen M.Sc. Data Science an der HAW Kiel mit Note 1,7 abgeschlossen und bringe praktische Erfahrung aus Forschung und Projekten mit. Am GEOMAR habe ich u. a. einen Test- und Auswertungsprozess in Python automatisiert und in reproduzierbare Abläufe überführt. Wichtig war mir dabei, dass Ergebnisse nachvollziehbar, wiederholbar und für Entscheidungs- und Projektkontexte sauber aufbereitet sind.
+
+  Sehr greifbar in Richtung Data Engineering ist außerdem ein Projekt, bei dem ich 10–15 Event-Websites scrape, Daten normalisiere und dedupliziere, in einer Datenbank persistiere und anschließend automatisiert in einen Kalender synchronisiere. Das Ganze ist containerisiert und in der Google Cloud deployt. Zusätzlich habe ich ein Kunststoff-Recycling-KMU auf Projektbasis zur Konzeption einer Datenpipeline beraten – von Quellenanbindung über Datenmodell bis Datenqualität – inklusive Abstimmung mit Fachbereichen.
+
+  An taod reizt mich besonders, dass ich mich in Projekten an modernen Cloud-Datenplattformen (z. B. Azure oder Snowflake) weiterentwickeln kann und gleichzeitig den Workshop-/Consulting-Anteil aktiv mitnehme. Ich wohne in Köln und finde den regelmäßigen Austausch im Büro und im Team für Lernkurve und Qualität der Arbeit einfach sinnvoll.
+
+  Ich freue mich, wenn wir uns kennenlernen. Eine vollständige Notenübersicht kann ich bei Bedarf gerne nachreichen.
+
+  Viele Grüße
+  Flemming Reese
+  ---
+
 search_profiles:
   - name: koeln
     remote_only: false
@@ -29,7 +73,26 @@ search_profiles:
       - was: "Data Engineer"
         wo: "50667"
         umkreis: 25
+      - was: "Data Scientist"
+        wo: "50667"
+        umkreis: 25
+      - was: "Machine Learning Engineer"
+        wo: "50667"
+        umkreis: 25
+      - was: "ML Engineer"
+        wo: "50667"
+        umkreis: 25
+      - was: "AI Engineer"
+        wo: "50667"
+        umkreis: 25
+      - was: "KI Ingenieur"
+        wo: "50667"
+        umkreis: 25
+      - was: "Prompt Engineer"
+        wo: "50667"
+        umkreis: 25
     title_keywords:
+      # bestehend
       - data
       - engineer
       - scientist
@@ -40,12 +103,20 @@ search_profiles:
       - ml
       - ai
       - platform
+      # neu
+      - llm
+      - nlp
+      - automation
+      - developer        # "Python Developer" Jobs mitziehen
+      - intelligence     # "Artificial Intelligence" in Titeln
     title_exclude:
       - head of
       - director
       - "vp "
       - chief
       - c-level
+      - "senior"
+      - "lead"
     fit_score_context: |
       Präferenzen:
       - Standort Köln; Hybrid oder Onsite bevorzugt, reines Remote eher unerwünscht
@@ -53,6 +124,7 @@ search_profiles:
       - Data Engineering Fokus bevorzugt; DS/ML-Anteile in Ordnung; Deep Learning eher unpassend
       - Zeitarbeit / Personalvermittler (z.B. FERCHAU, Hays, Gulp) negativ bewerten
       - Deutsch oder Englisch beide okay
+      - AI/LLM Engineer Rollen positiv bewerten wenn Python-heavy; reine Forschungsrollen (kein Engineering) eher 2-3
 
       Scoring-Leitfaden:
       5 = DE-Rolle, Stack passt stark (Python, SQL, Docker, Cloud, Linux), Köln/hybrid, Direktanstellung
@@ -86,16 +158,21 @@ search_profiles:
       - c-level
     fit_score_context: |
       Präferenzen:
-      - Vollständig remote, deutschlandweit oder EU-weit
+      - Standort Köln; Hybrid oder Onsite bevorzugt, reines Remote eher unerwünscht
       - Festanstellung oder Freelance
-      - Bewertung rein nach Tech/Role-Match, Standort spielt keine Rolle
-      - Data Engineering Fokus bevorzugt; DS/ML-Anteile in Ordnung; Deep Learning eher unpassend
       - Zeitarbeit / Personalvermittler (z.B. FERCHAU, Hays, Gulp) negativ bewerten
       - Deutsch oder Englisch beide okay
-
+    
+      Rollenpriorität (absteigend):
+      1. Data Engineer — klarer Fokus
+      2. AI/LLM Engineer — wenn Engineering-lastig (Pipelines, APIs, RAG, Deployment); nicht wenn primär Forschung oder Modell-Training
+      3. Data Scientist — wenn Python/Engineering-Anteil erkennbar
+      4. Analytics Engineer — okay, aber weniger interessant
+      5. ML Engineer — nur wenn kein Heavy-DL/Forschungsfokus
+    
       Scoring-Leitfaden:
-      5 = Remote-Rolle, Stack passt stark (Python, SQL, Docker, Cloud, Linux), Direktanstellung
-      4 = passt gut, kleinere Lücken im Stack oder leicht erhöhte Seniority-Erwartung
-      3 = grundsätzlich passend aber nennenswerte Lücken (z.B. Spark-heavy, viel DL) oder Zeitarbeit
-      2 = eher unpassend (falscher Stack, reines ML/DL, sehr hohe Seniority)
-      1 = nicht passend (komplett anderes Feld, nur Senior+, nur DL)
+      5 = DE-Rolle oder AI-Engineering-Rolle, Stack passt stark (Python, SQL, Docker, Cloud, Linux), Köln/hybrid, Direktanstellung
+      4 = passt gut, kleinere Lücken im Stack oder leicht erhöhte Seniority-Erwartung; Consulting okay wenn tech-heavy
+      3 = grundsätzlich passend aber nennenswerte Lücken (z.B. Spark-heavy, viel DL) oder Zeitarbeit; Consulting mit wenig Tech-Anteil
+      2 = eher unpassend (falscher Stack, reines ML/DL-Forschung, Modell-Training-Fokus, reines Remote)
+      1 = nicht passend (komplett anderes Feld, nur DL-Research, kein Python-Bezug)

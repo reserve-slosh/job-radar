@@ -1,7 +1,23 @@
 name: hjoerdis
 
-# TODO: mit Hjördis zusammen ausarbeiten
-profile_text: ""
+profile_text: |
+  Hintergrund:
+  - M.Sc. / Diplom Soziale Arbeit / Sozialpädagogik
+  - 2–5 Jahre Berufserfahrung; aktuell angestellt, aktiv suchend
+  - Tätigkeitsbereiche: Projektkoordination, Prävention & Gesundheitsförderung,
+    Gleichstellung & Diversity, Bildung / Workshops / Seminare,
+    Sozialmanagement / Case Management, NGO / Verbandsarbeit
+  - Arbeitsschwerpunkt: Mix aus fachlicher und koordinativer Arbeit, eher fachlich
+
+  Präferenzen:
+  - Teilzeit bevorzugt
+  - Festanstellung oder Projektbefristung
+  - Köln bevorzugt, Hybrid okay
+  - Bevorzugte Branchen: Gleichstellung/Diversity, Bildung/Prävention, NGO/gemeinnützige Träger, BGM
+  - Anschreibenstil: flexibel (formell oder locker je nach Arbeitgeber)
+  - Sprache: Deutsch oder Englisch
+
+  # TODO: mit Hjördis konkretisieren — bisherige Stationen, Kernkompetenzen, Beispielprojekte
 
 search_profiles:
   - name: koeln
@@ -65,7 +81,37 @@ search_profiles:
       - chief
       - pflegefachkraft
       - krankenpflege
-    fit_score_context: ""  # TODO: mit Hjördis ausarbeiten
+    fit_score_context: |
+      Kandidatin: Hjördis, M.Sc. Soziale Arbeit, 2–5 Jahre Erfahrung in Gleichstellung,
+      BGM, Bildung/Prävention, Case Management und NGO-Arbeit. Teilzeit bevorzugt.
+      Köln bevorzugt, Hybrid okay. Festanstellung oder Projektbefristung.
+
+      Präferenzen (Priorität absteigend):
+      1. Inhalte / Sinnhaftigkeit der Tätigkeit
+      2. Work-Life-Balance / Flexibilität (inkl. Teilzeit)
+      3. Gehalt
+      4. Standort / Pendelweg
+      5. Team / Unternehmenskultur
+      6. Entwicklungsmöglichkeiten
+
+      Bevorzugte Arbeitgeber: Gleichstellung/Diversity in Unternehmen oder Behörden,
+      Bildung/Prävention (Schulen, Jugendhilfe, Träger), NGO / gemeinnützige Träger,
+      BGM in Unternehmen. Öffentlicher Dienst und Sozialwirtschaft (AWO, DRK, Caritas) okay.
+
+      Abwertend:
+      - Zeitarbeit / Personalvermittler (z.B. Hays, Adecco)
+      - Reine Pflegeberufe (Kranken-, Altenpflege)
+      - Vollständig remote (kein Ortsbezug Köln)
+      - Nur Vollzeit ohne Teilzeit-Option
+
+      Scoring-Leitfaden:
+      5 = Rolle passt inhaltlich stark (Gleichstellung, BGM, Bildung, NGO), Köln/hybrid,
+          Teilzeit möglich, Festanstellung oder Befristung, sinnstiftender Arbeitgeber
+      4 = gute inhaltliche Passung, kleinere Abstriche (z.B. nur Vollzeit oder etwas weiter weg)
+      3 = grundsätzlich passend, aber nennenswerte Lücken (z.B. kaum Sozialbezug,
+          reine Verwaltung, oder Zeitarbeit)
+      2 = eher unpassend (falscher Inhalt, zu hohe Seniority, reines Remote)
+      1 = nicht passend (Pflegeberufe, komplett anderes Feld, nur Senior+)
 
   - name: remote_de
     enabled: false
@@ -115,4 +161,14 @@ search_profiles:
       - chief
       - pflegefachkraft
       - krankenpflege
-    fit_score_context: ""  # TODO: mit Hjördis ausarbeiten
+    fit_score_context: |
+      Kandidatin: Hjördis, M.Sc. Soziale Arbeit, 2–5 Jahre Erfahrung. Remote-Profil.
+      Bewertung rein nach inhaltlichem Match (Gleichstellung, BGM, Bildung, NGO).
+      Teilzeit bevorzugt. Zeitarbeit und Pflegeberufe abwertend.
+
+      Scoring-Leitfaden:
+      5 = Remote-Rolle, starker inhaltlicher Match, Teilzeit möglich, Direktanstellung
+      4 = gute Passung, kleinere Abstriche
+      3 = grundsätzlich passend, Zeitarbeit oder inhaltliche Lücken
+      2 = eher unpassend (falscher Inhalt, sehr hohe Seniority)
+      1 = nicht passend (Pflegeberufe, komplett anderes Feld)
