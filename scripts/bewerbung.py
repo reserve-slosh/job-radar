@@ -26,7 +26,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-sonnet-4-20250514"
+_MODEL = "claude-sonnet-4-6"
 _THINKING_BUDGET = 10000  # Token-Budget für Reasoning
 _PLACEHOLDERS = ["BETREFF", "ANREDE", "BODY", "GRUSSFORMEL"]
 _LATEX_ESCAPE = {
@@ -191,7 +191,7 @@ def _call_sonnet(prompt: str, api_key: str) -> tuple[dict, list[str]]:
     client = anthropic.Anthropic(api_key=api_key)
     message = client.beta.messages.create(
         model=_MODEL,
-        max_tokens=_THINKING_BUDGET + 6000,
+        max_tokens=_THINKING_BUDGET + 9000,
         thinking={"type": "enabled", "budget_tokens": _THINKING_BUDGET},
         tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[{"role": "user", "content": prompt}],
