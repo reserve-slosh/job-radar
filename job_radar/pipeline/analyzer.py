@@ -59,7 +59,7 @@ def analyze(text: str, api_key: str = "", profile_text: str = "", fit_score_cont
         logger.error("LLM-Analyse: ungültiges JSON in Antwort: %s", e)
         return _stub()
     except Exception as e:
-        logger.error("LLM-Analyse fehlgeschlagen: %s", e)
+        logger.error("LLM-Analyse fehlgeschlagen (%s): %s", type(e).__name__, e)
         return _stub()
 
 
