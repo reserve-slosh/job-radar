@@ -23,7 +23,7 @@ class Job:
     fit_score: int | None = None
     modifikations_timestamp: str | None = None
     source: str = "arbeitsagentur"
-    search_profile: str = "koeln"
+    search_profile: str = ""
     fetched_at: str = ""
     bewerbung_entwurf: str | None = None
     bewerbung_status: str | None = None
@@ -41,7 +41,7 @@ class Job:
 @dataclass
 class PipelineRun:
     id: int | None = None
-    started_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     finished_at: str | None = None
     source: str = ""
     search_profile: str = ""
@@ -135,8 +135,9 @@ def _add_column(conn: sqlite3.Connection, table: str, column: str, col_type: str
     """
     try:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" not in str(e):
+            raise
 
 
 def get_job_url(refnr: str, source: str) -> str | None:
