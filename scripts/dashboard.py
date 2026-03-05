@@ -392,7 +392,7 @@ def _generate_cover_letter(config: Config, job: dict, candidate_name: str) -> No
 
     with st.spinner("Sonnet analysiert die Stelle und recherchiert das Unternehmen..."):
         try:
-            prompt = bewerbung._build_prompt(candidate, job)
+            prompt = bewerbung._build_prompt(candidate.profile_text, job)
             values, sources = bewerbung._call_sonnet(prompt, config.anthropic_api_key)
             tex = bewerbung._fill_template(template, values)
 
