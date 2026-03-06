@@ -109,6 +109,7 @@ def init_db(db_path: str) -> None:
         _add_column(conn, "jobs", "duplicate_of", "TEXT")
         _add_column(conn, "jobs", "job_status", "TEXT DEFAULT 'active'")
         _add_column(conn, "jobs", "status_updated_at", "TEXT")
+        _add_column(conn, "jobs", "notified_at", "TEXT")
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS runs (
