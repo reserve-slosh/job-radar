@@ -298,6 +298,42 @@ def get_active_refnrs(db_path: str, search_profile: str) -> set[str]:
     return {row["refnr"] for row in rows}
 
 
+def update_raw_text(db_path: str, refnr: str, raw_text: str) -> None:
+    """Overwrites raw_text for a job without touching any other fields."""
+    with get_connection(db_path) as conn:
+        conn.execute(
+            "UPDATE jobs SET raw_text = ? WHERE refnr = ?", (raw_text, refnr)
+        )
+
+
+def update_analysis(db_path: str, refnr: str, result: dict) -> None:
+    """Overwrites LLM analysis fields for a job. Called after manual re-analysis."""
+    import json
+    with get_connection(db_path) as conn:
+        conn.execute("""
+            UPDATE jobs SET
+                titel_normalisiert = :titel_normalisiert,
+                remote = :remote,
+                vertragsart = :vertragsart,
+                seniority = :seniority,
+                tech_stack = :tech_stack,
+                zusammenfassung = :zusammenfassung,
+                fit_score = :fit_score,
+                llm_output = :llm_output
+            WHERE refnr = :refnr
+        """, {
+            "titel_normalisiert": result.get("titel_normalisiert"),
+            "remote": result.get("remote"),
+            "vertragsart": result.get("vertragsart"),
+            "seniority": result.get("seniority"),
+            "tech_stack": json.dumps(result.get("tech_stack")) if result.get("tech_stack") else None,
+            "zusammenfassung": result.get("zusammenfassung"),
+            "fit_score": result.get("fit_score"),
+            "llm_output": json.dumps(result),
+            "refnr": refnr,
+        })
+
+
 def mark_jobs_presumably_filled(
     db_path: str,
     search_profile: str,
