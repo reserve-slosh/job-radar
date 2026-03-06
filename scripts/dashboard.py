@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from job_radar.config import Config, load_profiles
-from job_radar.db.models import get_connection, get_job_url, update_bewerbung, init_db
+from job_radar.db.models import get_connection, get_job_url, update_bewerbung, init_db, update_raw_text, update_analysis
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -201,6 +201,41 @@ def _render_jobs_tab(config: Config) -> None:
 # Tab: Detail & Bewerbung
 # ---------------------------------------------------------------------------
 
+def _reanalyze_job(config: Config, job: dict, raw_text: str) -> None:
+    """Saves updated raw_text and re-runs LLM analysis for the job."""
+    from job_radar.pipeline.analyzer import analyze
+
+    update_raw_text(config.db_path, job["refnr"], raw_text)
+
+    candidates = load_profiles(config.profiles_dir)
+    profile_key = job.get("search_profile", "")
+    candidate_name = profile_key.split("_")[0] if profile_key else ""
+    search_profile_name = "_".join(profile_key.split("_")[1:]) if "_" in profile_key else ""
+
+    candidate = next((c for c in candidates if c.name == candidate_name), None)
+    search_profile = next(
+        (sp for sp in candidate.search_profiles if sp.name == search_profile_name),
+        candidate.search_profiles[0] if candidate else None,
+    ) if candidate else None
+
+    profile_text = candidate.profile_text if candidate else ""
+    fit_score_context = search_profile.fit_score_context if search_profile else ""
+
+    with st.spinner("Haiku analysiert die Stelle neu..."):
+        try:
+            result = analyze(
+                raw_text,
+                api_key=config.anthropic_api_key,
+                profile_text=profile_text,
+                fit_score_context=fit_score_context,
+            )
+            update_analysis(config.db_path, job["refnr"], result)
+            st.success(f"Neu analysiert. Fit Score: {result.get('fit_score')}")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Analyse fehlgeschlagen: {e}")
+
+
 def _render_detail_tab(config: Config) -> None:
     refnr = st.session_state.get("selected_refnr")
 
@@ -277,7 +312,27 @@ def _render_detail_tab(config: Config) -> None:
             st.write("—")
 
     with st.expander("Vollständige Stellenbeschreibung"):
-        st.text(job.get("raw_text") or "Kein Text verfügbar.")
+        edited_text = st.text_area(
+            "Stellenbeschreibung",
+            value=job.get("raw_text") or "",
+            height=300,
+            label_visibility="collapsed",
+        )
+        col_save, col_reanalyze = st.columns(2)
+
+        with col_save:
+            if st.button("💾 Speichern", key=f"save_text_{refnr}"):
+                update_raw_text(config.db_path, refnr, edited_text)
+                st.success("Text gespeichert.")
+                st.rerun()
+
+        with col_reanalyze:
+            if st.button(
+                "🔄 Neu analysieren",
+                key=f"reanalyze_{refnr}",
+                disabled=not config.anthropic_api_key,
+            ):
+                _reanalyze_job(config, job, edited_text)
 
     st.divider()
 
