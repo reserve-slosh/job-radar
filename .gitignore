@@ -214,3 +214,8 @@ logs/
 job_radar.db
 .DS_Store
 .idea/
+
+
+analyze_keywords.py
+flemm@192.168.178.41
+/output
