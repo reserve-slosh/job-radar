@@ -3,7 +3,12 @@ import logging
 import logging.handlers
 import json
 import os
+import sys
 from pathlib import Path
+
+if str(Path(__file__).parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).parent))
+from notify import notify_if_configured
 from job_radar.config import Config, load_profiles, CandidateProfile, SearchProfile
 from job_radar.db.models import (
     init_db, job_exists, insert_job, update_job, get_modifikations_timestamp,
@@ -174,6 +179,7 @@ def _run_profile(
             jobs_failed=total_failed,
             status="success",
         )
+        notify_if_configured(config.db_path, run_id)
 
     except Exception as e:
         finish_run(
