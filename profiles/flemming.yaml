@@ -2,20 +2,23 @@ name: flemming
 
 profile_text: |
   Erfahrung:
-  - M.Sc. Data Science (HAW Kiel, 02/2025, Note 1,7); Schwerpunkte: Data Management, Cloud Computing, Big Data Technologies (alle 1,0)
+  - M.Sc. Data Science (HAW Kiel, 02/2026, Note 1,7); Schwerpunkte: Data Management, Cloud Computing, Big Data Technologies (alle 1,0)
   - ~1,5 Jahre als Data Scientist am GEOMAR (Automatisierung, Benchmarking, Python-Pipelines)
   - Freiberuflich: End-to-End Datenpipeline für Medienunternehmen (Scraping, Normalisierung, Deduplizierung, MySQL, Docker, Google Cloud, Hetzner-Linux-Server)
   - Masterarbeit: modulares Python-Package (src-Layout, pytest, mehrere Solver-Familien) für AUV-Routenoptimierung
+  - job-radar (Eigenprojekt): Multi-Source-Aggregation von Stellenanzeigen, LLM-Integration zur strukturierten Inhaltsanalyse und Profilbewertung (Haiku für Extraktion/Scoring, Sonnet mit Extended Thinking für Generierung), bewusste Aufgabentrennung nach Modelltyp und Kosten; SQLite, Streamlit-Dashboard
+  - infermail (Eigenprojekt): automatisierte E-Mail-Pipeline (IMAP-Fetching mehrerer Postfächer, PostgreSQL, Docker Compose, ML-Klassifizierung mit selbstverbesserndem Trainings-Loop); autonomer Betrieb mit Monitoring
   - Noch keine Vollzeit-Festanstellung; alle Erfahrung parallel zum Studium
 
   Stack (produktiv eingesetzt):
   - Python (stark): Pandas, NumPy, Requests/BeautifulSoup, SQLAlchemy, Matplotlib
-  - Data Engineering: ETL/ELT, MySQL, Docker, Google Cloud, Linux (Ubuntu), Git
-  - Software Engineering: modulare Paketarchitektur, pytest, LLM-assisted development
+  - Data Engineering: ETL/ELT, MySQL, PostgreSQL, Docker, Docker Compose, Google Cloud, Linux (Ubuntu), Git
+  - Software Engineering: modulare Paketarchitektur, pytest, Claude Code, Agentic Workflows (produktiv eingesetzt als Entwicklungswerkzeug)
+  - LLM-Integration: Anthropic API (Haiku, Sonnet, Extended Thinking), bewusste Modellauswahl nach Aufgabentyp und Kosten
   - SQL: mid-level
   - Scikit-Learn, FastAPI/Flask, PyTorch: Grundlagen
 
-  Keine Produktionserfahrung mit: Spark, Kafka, Airflow, dbt — Konzepte bekannt
+  Keine Produktionserfahrung mit: Spark, Kafka, Airflow, dbt, Terraform, Kubernetes — Konzepte bekannt
 
   ---
 
@@ -25,15 +28,17 @@ profile_text: |
   ---
   Sehr geehrte Damen und Herren,
 
-  ich habe meinen Master in Data Science im Februar 2025 abgeschlossen und suche nun den Einstieg in ein Umfeld, das mit echten Datenproblemen arbeitet. Qimia spricht mich an, weil das Unternehmen beides verbindet: technisch anspruchsvolle Projektarbeit und ein klares Interesse daran, Mitarbeiterinnen und Mitarbeiter weiterzuentwickeln.
+  ich habe meinen Master in Data Science im Februar 2026 abgeschlossen und suche nun den Einstieg in ein Umfeld, das mit echten Datenproblemen arbeitet. Qimia spricht mich an, weil das Unternehmen beides verbindet: technisch anspruchsvolle Projektarbeit und ein klares Interesse daran, Mitarbeiterinnen und Mitarbeiter weiterzuentwickeln.
 
   Was mich im Laufe des Studiums am stärksten interessiert hat, war weniger die Modellierung als das Bauen: robuste Pipelines, saubere Systemarchitektur, Automatisierung von Prozessen, die vorher manuell oder gar nicht liefen. Data Engineering ist der Bereich, der das am direktesten erfüllt. Ich betreibe privat einen eigenen Homeserver, weil mich Deployment, Monitoring und Systemwartung intrinsisch motivieren und mir die Arbeit, Dinge zuverlässig im Hintergrund laufen zu lassen, echten Spaß macht.
 
   In meiner Masterarbeit habe ich ein vollständiges Python-Package zur Routenoptimierung für autonome Unterwasserfahrzeuge entwickelt: mit eigenem src-Layout, getrennten Modulen für Routing, Environment, IO und Visualisierung sowie einer vollständigen Testsuite. Mehrere Solver-Familien wurden unter operativen und umweltbedingten Constraints systematisch bewertet. Das Package ist modular aufgebaut, sodass andere Forschende damit weiterarbeiten können.
 
-  Produktionserfahrung habe ich durch zwei freiberufliche Projekte für ein Medienunternehmen gesammelt, zu dem ich über ein Studienprojekt Kontakt aufgebaut hatte. Der wesentliche Auftrag war eine automatisierte Event-Datenpipeline: Scraping, Normalisierung, Deduplizierung, Persistierung in PostgreSQL, containerisiert mit Docker, betrieben in der Google Cloud und auf einem Hetzner-Server. Deployment, Monitoring und Wartung habe ich eigenständig verantwortet. Ein zweites Projekt bestand im Troubleshooting und Redeployment einer Anwendung, die fehlerhaft in Betrieb genommen worden war.
+  Produktionserfahrung habe ich durch zwei freiberufliche Projekte für ein Medienunternehmen gesammelt, zu dem ich über ein Studienprojekt Kontakt aufgebaut hatte. Der wesentliche Auftrag war eine automatisierte Event-Datenpipeline: Scraping, Normalisierung, Deduplizierung, Persistierung in MySQL, containerisiert mit Docker, betrieben in der Google Cloud und auf einem Hetzner-Server. Deployment, Monitoring und Wartung habe ich eigenständig verantwortet. Ein zweites Projekt bestand im Troubleshooting und Redeployment einer Anwendung, die fehlerhaft in Betrieb genommen worden war.
 
-  Am GEOMAR habe ich Python-basierte Auswertungsprozesse automatisiert und Ergebnisse für eine interdisziplinäre Forschungsgruppe aufbereitet, mit dem Anspruch, algorithmisch komplexe Zusammenhänge auch für Forschende außerhalb der Informatik verständlich zu machen. Außerdem habe ich den Kontakt zwischen dem AUV-Team meiner Hochschule und dem entsprechenden Team am GEOMAR initiiert, weil ich eine fachlich sinnvolle Verbindung gesehen habe.
+  Am GEOMAR habe ich Python-basierte Auswertungsprozesse automatisiert und Ergebnisse für eine interdisziplinäre Forschungsgruppe aufbereitet, mit dem Anspruch, algorithmisch komplexe Zusammenhänge auch für Forschende außerhalb der Informatik verständlich zu machen.
+
+  Daneben habe ich zwei Eigenprojekte aufgebaut, die produktiv laufen: job-radar aggregiert Stellenanzeigen aus mehreren Quellen, normalisiert unstrukturierte Rohtexte und bewertet sie per LLM-Integration — Haiku für strukturierte Extraktion und Scoring, Sonnet mit Extended Thinking für aufwändigere Generierungsaufgaben, bewusst aufgeteilt nach Aufgabentyp und Kosten. infermail ist eine automatisierte E-Mail-Pipeline: IMAP-Fetching, Persistierung in PostgreSQL, ML-Klassifizierung mit einem Trainings-Loop aus dem laufenden Nutzungsverhalten, containerisiert mit Docker Compose. Beide Systeme laufen autonom; ich greife nur ein, wenn etwas schiefläuft.
 
   Mit Spark, Kafka und vergleichbaren Systemen habe ich bislang keine Produktionserfahrung. Die zugrundeliegenden Konzepte verteilter Verarbeitung kenne ich aus dem Studium und habe mich darüber hinaus autodidaktisch damit beschäftigt. Ich bin überzeugt, dass ich mich in jeden konkreten Stack schnell einarbeiten kann, sobald ich weiß, wofür ich es tue. Ich bringe ein solides Python-Fundament, Erfahrung mit Cloud-Deployment und Linux sowie die Fähigkeit, Systeme strukturiert aufzubauen und wartbar zu halten. Ob als direkter Einstieg oder im Rahmen Ihres Trainingsprogramms, ich bin für beides offen.
 
@@ -49,9 +54,9 @@ profile_text: |
 
   ich bewerbe mich als Junior Data Engineer bei euch. Der Mix aus Cloud-Datenprojekten, Datenintegration und Kundenarbeit passt sehr gut zu dem, was ich in den letzten Projekten gemacht habe und worauf ich mich weiter spezialisieren möchte: robuste Datenprozesse bauen, die im Alltag wirklich funktionieren – und das im Austausch mit Stakeholdern.
 
-  Ich habe im Februar 2025 meinen M.Sc. Data Science an der HAW Kiel mit Note 1,7 abgeschlossen und bringe praktische Erfahrung aus Forschung und Projekten mit. Am GEOMAR habe ich u. a. einen Test- und Auswertungsprozess in Python automatisiert und in reproduzierbare Abläufe überführt. Wichtig war mir dabei, dass Ergebnisse nachvollziehbar, wiederholbar und für Entscheidungs- und Projektkontexte sauber aufbereitet sind.
+  Ich habe im Februar 2026 meinen M.Sc. Data Science an der HAW Kiel mit Note 1,7 abgeschlossen und bringe praktische Erfahrung aus Forschung und Projekten mit. Am GEOMAR habe ich u. a. einen Test- und Auswertungsprozess in Python automatisiert und in reproduzierbare Abläufe überführt. Wichtig war mir dabei, dass Ergebnisse nachvollziehbar, wiederholbar und für Entscheidungs- und Projektkontexte sauber aufbereitet sind.
 
-  Sehr greifbar in Richtung Data Engineering ist außerdem ein Projekt, bei dem ich 10–15 Event-Websites scrape, Daten normalisiere und dedupliziere, in einer Datenbank persistiere und anschließend automatisiert in einen Kalender synchronisiere. Das Ganze ist containerisiert und in der Google Cloud deployt. Zusätzlich habe ich ein Kunststoff-Recycling-KMU auf Projektbasis zur Konzeption einer Datenpipeline beraten – von Quellenanbindung über Datenmodell bis Datenqualität – inklusive Abstimmung mit Fachbereichen.
+  Sehr greifbar in Richtung Data Engineering ist ein freiberufliches Projekt, bei dem ich 10–15 Event-Websites scrape, Daten normalisiere und dedupliziere, in MySQL persistiere und containerisiert in der Google Cloud betreibe – Deployment, Monitoring und Wartung vollständig in Eigenverantwortung. Daneben habe ich zwei Eigenprojekte aufgebaut: job-radar aggregiert Stellenanzeigen aus mehreren Quellen, normalisiert Rohtexte und bewertet sie per LLM-Integration (Haiku für Extraktion und Scoring, Sonnet mit Extended Thinking für Generierung). infermail ist eine automatisierte E-Mail-Pipeline mit IMAP-Fetching, PostgreSQL, Docker Compose und ML-Klassifizierung mit selbstverbesserndem Trainings-Loop – läuft autonom, verbessert sich periodisch.
 
   An taod reizt mich besonders, dass ich mich in Projekten an modernen Cloud-Datenplattformen (z. B. Azure oder Snowflake) weiterentwickeln kann und gleichzeitig den Workshop-/Consulting-Anteil aktiv mitnehme. Ich wohne in Köln und finde den regelmäßigen Austausch im Büro und im Team für Lernkurve und Qualität der Arbeit einfach sinnvoll.
 
@@ -70,6 +75,7 @@ search_profiles:
       - "Koeln"
       - "50"
     arbeitsagentur_queries:
+      # Data / ML / AI
       - was: "Data Engineer"
         wo: "50667"
         umkreis: 25
@@ -88,11 +94,41 @@ search_profiles:
       - was: "KI Ingenieur"
         wo: "50667"
         umkreis: 25
-      - was: "Prompt Engineer"
+      # DevOps / Cloud / Infrastructure
+      - was: "DevOps Engineer"
+        wo: "50667"
+        umkreis: 25
+      - was: "Cloud Engineer"
+        wo: "50667"
+        umkreis: 25
+      - was: "Platform Engineer"
+        wo: "50667"
+        umkreis: 25
+      - was: "Site Reliability Engineer"
+        wo: "50667"
+        umkreis: 25
+      # Cybersecurity
+      - was: "IT Security"
+        wo: "50667"
+        umkreis: 25
+      - was: "IT-Sicherheit"
+        wo: "50667"
+        umkreis: 25
+      - was: "Cybersecurity"
+        wo: "50667"
+        umkreis: 25
+      # Trainee (gezielt, nicht als title_keyword)
+      - was: "Trainee IT"
+        wo: "50667"
+        umkreis: 25
+      - was: "Trainee Data"
+        wo: "50667"
+        umkreis: 25
+      - was: "Trainee Cloud"
         wo: "50667"
         umkreis: 25
     title_keywords:
-      # bestehend
+      # Data / ML / AI
       - data
       - engineer
       - scientist
@@ -103,12 +139,22 @@ search_profiles:
       - ml
       - ai
       - platform
-      # neu
       - llm
       - nlp
       - automation
-      - developer        # "Python Developer" Jobs mitziehen
-      - intelligence     # "Artificial Intelligence" in Titeln
+      - developer
+      - intelligence
+      # DevOps / Cloud / Infrastructure
+      - devops
+      - cloud
+      - infrastructure
+      - operations
+      - sre
+      - kubernetes
+      - deployment
+      # Security
+      - security
+      - sicherheit
     title_exclude:
       - head of
       - director
@@ -118,20 +164,96 @@ search_profiles:
       - "senior"
       - "lead"
     fit_score_context: |
-      Präferenzen:
-      - Standort Köln; Hybrid oder Onsite bevorzugt, reines Remote eher unerwünscht
-      - Festanstellung oder Freelance
-      - Data Engineering Fokus bevorzugt; DS/ML-Anteile in Ordnung; Deep Learning eher unpassend
-      - Zeitarbeit / Personalvermittler (z.B. FERCHAU, Hays, Gulp) negativ bewerten
-      - Deutsch oder Englisch beide okay
-      - AI/LLM Engineer Rollen positiv bewerten wenn Python-heavy; reine Forschungsrollen (kein Engineering) eher 2-3
+      Du bewertest Stellenanzeigen für Flemming Reese, M.Sc. Data Science (02/2026, Note 1,7).
+      Vergib vier unabhängige Scores als Integer 1–5.
 
-      Scoring-Leitfaden:
-      5 = DE-Rolle, Stack passt stark (Python, SQL, Docker, Cloud, Linux), Köln/hybrid, Direktanstellung
-      4 = passt gut, kleinere Lücken im Stack oder leicht erhöhte Seniority-Erwartung
-      3 = grundsätzlich passend aber nennenswerte Lücken (z.B. Spark-heavy, viel DL) oder Zeitarbeit
-      2 = eher unpassend (falscher Stack, reines ML/DL, reines Remote, sehr hohe Seniority)
-      1 = nicht passend (komplett anderes Feld, nur Senior+, nur DL)
+      === KANDIDATENPROFIL (Kurzfassung) ===
+      Stack produktiv: Python (stark), MySQL, PostgreSQL, Docker, Docker Compose, Google Cloud,
+      Linux/Ubuntu, Git, SQLAlchemy, Pandas, NumPy, Scikit-Learn (Grundlagen), LLM-APIs (Anthropic),
+      Claude Code, Agentic Workflows.
+      Keine Produktionserfahrung: Spark, Kafka, Airflow, dbt, Terraform, Kubernetes.
+      Standort: Köln. Angestrebtes Gehalt: ~50–60k€. Kein Interesse an reinen Forschungs-/DL-Rollen.
+
+      === SCORE 1: fit (Profilpassung) ===
+      Wie gut passt die Stelle zu Flemmings Profil und Interessen?
+      5 = Stack passt stark, Junior/Berufseinsteiger explizit willkommen oder klar erkennbar, Köln/hybrid, Direktanstellung
+      4 = passt gut, kleinere Stack-Lücken oder leicht erhöhte Seniority-Erwartung
+      3 = grundsätzlich passend, aber nennenswerte Lücken (z.B. Spark-heavy, viel DL, Kubernetes zwingend) oder Zeitarbeit
+      2 = eher unpassend (falscher Stack, reines ML/DL, sehr hohe Seniority, reines Remote)
+      1 = nicht passend (komplett anderes Feld, nur Senior+, nur DL-Research)
+
+      Malus-Regeln für fit:
+      - Befristete Stellen (WissZeitVG, Projektbefristung <2 Jahre): -1
+      - Akademische Stellen (Uniklinik, Forschungsinstitut): nicht als klassische DE-Stelle werten
+      - Zeitarbeit/Personalvermittlung (FERCHAU, Hays, Gulp, Randstad etc.): max. 3
+      - Kubernetes/Terraform/Spark als Hauptanforderung (nicht nice-to-have): -1
+      - Trainee-Rollen mit explizitem Entwicklungsprogramm und IT/Data-Fokus: +1 Bonus (kein Malus für fehlende Erfahrung)
+
+      === SCORE 2: future (Zukunftssicherheit der Branche/Rolle) ===
+      Wie zukunftssicher ist der Sektor und die Rolle angesichts KI-Automatisierung?
+      Verwende diese Lookup-Tabelle:
+      - DevOps/Cloud/Infrastructure: 3
+      - Cybersecurity: 3
+      - Healthcare-IT (privat): 3
+      - Software/Tech (Produkt): 3
+      - E-Commerce/Retail-Tech: 2
+      - Consulting (tech-heavy): 2
+      - Öffentlicher Dienst IT: 3 (strukturelle Nachfrage durch Digitalisierungspflicht)
+      - Data Engineering (klassisch): 2 (Rollenverschiebung, Routine schrumpft)
+      - Akademisch/Forschung (befristet): 1
+      - SAP/ERP: 2
+      - Zeitarbeit/Personalvermittlung: 1
+
+      === SCORE 3: salary (Gehaltserwartung Junior-Einstieg) ===
+      Wie hoch ist das zu erwartende Einstiegsgehalt im Sektor (Orientierung: Flemmings Ziel ~50–60k€)?
+      5 = >65k€ realistisch (z.B. Big Tech, Finance-IT)
+      4 = 55–65k€ realistisch (z.B. Consulting, DevOps Privatwirtschaft)
+      3 = 45–55k€ realistisch (z.B. Mittelstand, E-Commerce, Healthcare-IT)
+      2 = 38–48k€ realistisch (z.B. öffentlicher Dienst TVöD E12, SAP-Mittelstand)
+      1 = <40k€ (z.B. befristete Forschungsstellen, Zeitarbeit)
+
+      Lookup-Tabelle:
+      - Software/Tech (Produkt): 4
+      - Consulting (tech-heavy): 4
+      - DevOps/Cloud Privatwirtschaft: 4
+      - Cybersecurity Privatwirtschaft: 3
+      - Healthcare-IT (privat): 3
+      - E-Commerce/Retail-Tech: 3
+      - Mittelstand allgemein: 3
+      - Öffentlicher Dienst (TVöD): 2
+      - SAP/ERP: 3
+      - Akademisch/befristet: 1
+      - Zeitarbeit: 2
+
+      === SCORE 4: chance (Bewerbungserfolgswahrscheinlichkeit Junior ohne Berufserfahrung) ===
+      Wie realistisch ist es für Flemming, zu einem Gespräch eingeladen zu werden?
+      Berücksichtige: Wettbewerbsdichte, Junior-Freundlichkeit des Sektors, Fachkräftemangel.
+      5 = sehr hoch (chronischer Mangel, kaum Konkurrenz, Junior explizit willkommen — z.B. Zeitarbeit, öffentlicher Dienst)
+      4 = hoch (struktureller Mangel, überschaubare Konkurrenz — z.B. Cybersecurity, öffentlicher Dienst IT, SAP)
+      3 = mittel (Nachfrage vorhanden, aber Wettbewerb spürbar — z.B. DevOps, Consulting, Healthcare-IT)
+      2 = niedrig (hoher Wettbewerb oder Erfahrung klar erwartet — z.B. klassisches Data Engineering, allg. Software-Engineering)
+      1 = sehr niedrig (Markt schrumpft für Juniors, starke Konkurrenz — z.B. reine Software/Tech-Produkt-Stellen)
+
+      Lookup-Tabelle:
+      - Zeitarbeit/Personalvermittlung: 5
+      - Öffentlicher Dienst IT: 4
+      - SAP/ERP: 4
+      - Cybersecurity: 3
+      - DevOps/Cloud: 3
+      - Consulting (tech-heavy): 3
+      - Healthcare-IT (privat): 3
+      - E-Commerce/Retail-Tech: 3
+      - Data Engineering (klassisch): 2
+      - Allgemeines Software-Engineering: 2
+      - Software/Tech (Produkt): 1
+      - Akademisch/Forschung: 3
+
+      Trainee-Rollen mit explizitem Talent-Development-Programm (IT/Data-Fokus): chance +1 Bonus.
+
+      === AUSGABE ===
+      Gib die vier Scores als JSON aus:
+      {"fit": <1-5>, "future": <1-5>, "salary": <1-5>, "chance": <1-5>}
+      Plus eine kurze Begründung (2–3 Sätze) warum du diese Scores vergeben hast.
 
   - name: remote_de
     enabled: false
@@ -150,6 +272,9 @@ search_profiles:
       - ml
       - ai
       - platform
+      - devops
+      - cloud
+      - security
     title_exclude:
       - head of
       - director
@@ -162,17 +287,18 @@ search_profiles:
       - Festanstellung oder Freelance
       - Zeitarbeit / Personalvermittler (z.B. FERCHAU, Hays, Gulp) negativ bewerten
       - Deutsch oder Englisch beide okay
-    
+
       Rollenpriorität (absteigend):
       1. Data Engineer — klarer Fokus
-      2. AI/LLM Engineer — wenn Engineering-lastig (Pipelines, APIs, RAG, Deployment); nicht wenn primär Forschung oder Modell-Training
-      3. Data Scientist — wenn Python/Engineering-Anteil erkennbar
-      4. Analytics Engineer — okay, aber weniger interessant
-      5. ML Engineer — nur wenn kein Heavy-DL/Forschungsfokus
-    
-      Scoring-Leitfaden:
-      5 = DE-Rolle oder AI-Engineering-Rolle, Stack passt stark (Python, SQL, Docker, Cloud, Linux), Köln/hybrid, Direktanstellung
-      4 = passt gut, kleinere Lücken im Stack oder leicht erhöhte Seniority-Erwartung; Consulting okay wenn tech-heavy
-      3 = grundsätzlich passend aber nennenswerte Lücken (z.B. Spark-heavy, viel DL) oder Zeitarbeit; Consulting mit wenig Tech-Anteil
-      2 = eher unpassend (falscher Stack, reines ML/DL-Forschung, Modell-Training-Fokus, reines Remote)
+      2. DevOps/Cloud Engineer — wenn Linux/Docker-Erfahrung relevant
+      3. AI/LLM Engineer — wenn Engineering-lastig (Pipelines, APIs, RAG, Deployment)
+      4. Data Scientist — wenn Python/Engineering-Anteil erkennbar
+      5. Analytics Engineer — okay, aber weniger interessant
+      6. ML Engineer — nur wenn kein Heavy-DL/Forschungsfokus
+
+      Scoring-Leitfaden fit:
+      5 = Rolle passt stark, Stack passt (Python, SQL, Docker, Cloud, Linux), Direktanstellung, Junior willkommen
+      4 = passt gut, kleinere Lücken oder leicht erhöhte Seniority; Consulting okay wenn tech-heavy
+      3 = grundsätzlich passend, aber nennenswerte Lücken oder Zeitarbeit
+      2 = eher unpassend (falscher Stack, reines ML/DL-Forschung, sehr hohe Seniority)
       1 = nicht passend (komplett anderes Feld, nur DL-Research, kein Python-Bezug)

@@ -20,7 +20,7 @@ from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
 
-MIN_SCORE = 4
+MIN_SCORE = 3
 
 # Score badge colors
 _SCORE_COLORS = {5: "#2e7d32", 4: "#558b2f"}

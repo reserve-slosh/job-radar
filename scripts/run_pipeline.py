@@ -104,6 +104,9 @@ def _process_batch(
         job.tech_stack = json.dumps(result.get("tech_stack")) if result.get("tech_stack") else None
         job.zusammenfassung = result.get("zusammenfassung")
         job.fit_score = result.get("fit_score")
+        job.score_future = result.get("future")
+        job.score_salary = result.get("salary")
+        job.score_chance = result.get("chance")
         job.llm_output = json.dumps(result)
 
         if is_existing:

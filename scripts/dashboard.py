@@ -42,8 +42,8 @@ _STATUS_LABELS = {
 
 def _load_jobs(db_path: str, filters: dict) -> list[dict]:
     query = """
-        SELECT refnr, titel, arbeitgeber, ort, fit_score, seniority, remote,
-               vertragsart, bewerbung_status, search_profile, source,
+        SELECT refnr, titel, arbeitgeber, ort, fit_score, score_future, score_salary, score_chance,
+               seniority, remote, vertragsart, bewerbung_status, search_profile, source,
                zusammenfassung, tech_stack, eintrittsdatum, veroeffentlicht_am,
                bewerbung_entwurf, bewerbung_quellen, bewerbung_analyse, duplicate_of, fetched_at,
                titel_normalisiert, raw_text
@@ -64,6 +64,18 @@ def _load_jobs(db_path: str, filters: dict) -> list[dict]:
     if filters.get("score_max") is not None:
         query += " AND fit_score <= ?"
         params.append(filters["score_max"])
+
+    if filters.get("future_min") is not None:
+        query += " AND score_future >= ?"
+        params.append(filters["future_min"])
+
+    if filters.get("salary_min") is not None:
+        query += " AND score_salary >= ?"
+        params.append(filters["salary_min"])
+
+    if filters.get("chance_min") is not None:
+        query += " AND score_chance >= ?"
+        params.append(filters["chance_min"])
 
     if filters.get("seniority"):
         placeholders = ",".join("?" * len(filters["seniority"]))
@@ -137,6 +149,9 @@ def _render_jobs_tab(config: Config) -> None:
         )
 
         score_range = st.slider("Fit Score", min_value=1, max_value=5, value=(1, 5))
+        future_min = st.slider("Future Score (min)", min_value=1, max_value=5, value=1)
+        salary_min = st.slider("Salary Score (min)", min_value=1, max_value=5, value=1)
+        chance_min = st.slider("Chance Score (min)", min_value=1, max_value=5, value=1)
 
         seniority_opts = ["junior", "mid", "senior", "lead", "unknown"]
         selected_seniority = st.multiselect("Seniority", seniority_opts, default=seniority_opts)
@@ -156,6 +171,9 @@ def _render_jobs_tab(config: Config) -> None:
         "search_profile": selected_profiles,
         "score_min": score_range[0],
         "score_max": score_range[1],
+        "future_min": future_min if future_min > 1 else None,
+        "salary_min": salary_min if salary_min > 1 else None,
+        "chance_min": chance_min if chance_min > 1 else None,
         "seniority": selected_seniority,
         "remote": selected_remote,
         "bewerbung_status": selected_status,
@@ -169,8 +187,8 @@ def _render_jobs_tab(config: Config) -> None:
         st.info("Keine Jobs mit diesen Filtern.")
         return
 
-    header = st.columns([3, 2, 1, 1, 1, 1, 1])
-    for col, label in zip(header, ["Titel", "Arbeitgeber", "Score", "Seniority", "Remote", "Status", "Profil"]):
+    header = st.columns([3, 2, 1, 1, 1, 1, 1, 1, 1, 1])
+    for col, label in zip(header, ["Titel", "Arbeitgeber", "Fit", "Future", "Salary", "Chance", "Seniority", "Remote", "Status", "Profil"]):
         col.markdown(f"**{label}**")
     st.divider()
 
@@ -180,14 +198,17 @@ def _render_jobs_tab(config: Config) -> None:
         status_label = _STATUS_LABELS.get(job["bewerbung_status"], job["bewerbung_status"] or "—")
         dup_badge = " 🔁" if job.get("duplicate_of") else ""
 
-        cols = st.columns([3, 2, 1, 1, 1, 1, 1])
+        cols = st.columns([3, 2, 1, 1, 1, 1, 1, 1, 1, 1])
         cols[0].write(f"{job['titel'] or '—'}{dup_badge}")
         cols[1].write(job["arbeitgeber"] or "—")
         cols[2].write(f"{score_icon} {score}" if score else "—")
-        cols[3].write(job["seniority"] or "—")
-        cols[4].write(job["remote"] or "—")
-        cols[5].write(status_label)
-        cols[6].write(job["search_profile"] or "—")
+        cols[3].write(f"{_SCORE_COLORS.get(job['score_future'], '⚪')} {job['score_future']}" if job.get("score_future") else "—")
+        cols[4].write(f"{_SCORE_COLORS.get(job['score_salary'], '⚪')} {job['score_salary']}" if job.get("score_salary") else "—")
+        cols[5].write(f"{_SCORE_COLORS.get(job['score_chance'], '⚪')} {job['score_chance']}" if job.get("score_chance") else "—")
+        cols[6].write(job["seniority"] or "—")
+        cols[7].write(job["remote"] or "—")
+        cols[8].write(status_label)
+        cols[9].write(job["search_profile"] or "—")
 
         if cols[0].button("Detail →", key=f"btn_{job['refnr']}", use_container_width=False):
             st.session_state["selected_refnr"] = job["refnr"]

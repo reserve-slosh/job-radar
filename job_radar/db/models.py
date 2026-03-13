@@ -21,6 +21,9 @@ class Job:
     tech_stack: str | None = None  # JSON-String
     zusammenfassung: str | None = None
     fit_score: int | None = None
+    score_future: int | None = None
+    score_salary: int | None = None
+    score_chance: int | None = None
     modifikations_timestamp: str | None = None
     source: str = "arbeitsagentur"
     search_profile: str = ""
@@ -32,6 +35,7 @@ class Job:
     duplicate_of: str | None = None       # refnr des Original-Jobs
     job_status: str = "active"
     status_updated_at: str | None = None
+    status_changed_at: str | None = None
 
     def __post_init__(self):
         if not self.fetched_at:
@@ -87,6 +91,9 @@ def init_db(db_path: str) -> None:
                 tech_stack TEXT,
                 zusammenfassung TEXT,
                 fit_score INTEGER,
+                score_future INTEGER,
+                score_salary INTEGER,
+                score_chance INTEGER,
                 modifikations_timestamp TEXT,
                 source TEXT DEFAULT 'arbeitsagentur',
                 fetched_at TEXT,
@@ -97,7 +104,8 @@ def init_db(db_path: str) -> None:
                 bewerbung_analyse TEXT,
                 duplicate_of TEXT REFERENCES jobs(refnr),
                 job_status TEXT DEFAULT 'active',
-                status_updated_at TEXT
+                status_updated_at TEXT,
+                status_changed_at TEXT
             )
         """)
         # Idempotent migrations for existing databases
@@ -110,6 +118,10 @@ def init_db(db_path: str) -> None:
         _add_column(conn, "jobs", "job_status", "TEXT DEFAULT 'active'")
         _add_column(conn, "jobs", "status_updated_at", "TEXT")
         _add_column(conn, "jobs", "notified_at", "TEXT")
+        _add_column(conn, "jobs", "score_future", "INTEGER")
+        _add_column(conn, "jobs", "score_salary", "INTEGER")
+        _add_column(conn, "jobs", "score_chance", "INTEGER")
+        _add_column(conn, "jobs", "status_changed_at", "TEXT")
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS runs (
@@ -173,12 +185,14 @@ def insert_job(db_path: str, job: Job) -> None:
                 refnr, titel, arbeitgeber, ort, eintrittsdatum,
                 veroeffentlicht_am, raw_text, llm_output, titel_normalisiert,
                 remote, vertragsart, seniority, tech_stack, zusammenfassung,
-                fit_score, modifikations_timestamp, source, fetched_at, search_profile
+                fit_score, score_future, score_salary, score_chance,
+                modifikations_timestamp, source, fetched_at, search_profile
             ) VALUES (
                 :refnr, :titel, :arbeitgeber, :ort, :eintrittsdatum,
                 :veroeffentlicht_am, :raw_text, :llm_output, :titel_normalisiert,
                 :remote, :vertragsart, :seniority, :tech_stack, :zusammenfassung,
-                :fit_score, :modifikations_timestamp, :source, :fetched_at, :search_profile
+                :fit_score, :score_future, :score_salary, :score_chance,
+                :modifikations_timestamp, :source, :fetched_at, :search_profile
             )
         """, job.__dict__)
 
@@ -201,6 +215,9 @@ def update_job(db_path: str, job: Job) -> None:
                 tech_stack = :tech_stack,
                 zusammenfassung = :zusammenfassung,
                 fit_score = :fit_score,
+                score_future = :score_future,
+                score_salary = :score_salary,
+                score_chance = :score_chance,
                 modifikations_timestamp = :modifikations_timestamp,
                 fetched_at = :fetched_at
             WHERE refnr = :refnr
@@ -222,6 +239,7 @@ def update_bewerbung(
         updates["bewerbung_entwurf"] = entwurf
     if status is not None:
         updates["bewerbung_status"] = status
+        updates["status_changed_at"] = datetime.now(timezone.utc).isoformat()
     if quellen is not None:
         updates["bewerbung_quellen"] = quellen
     if analyse is not None:
@@ -320,6 +338,9 @@ def update_analysis(db_path: str, refnr: str, result: dict) -> None:
                 tech_stack = :tech_stack,
                 zusammenfassung = :zusammenfassung,
                 fit_score = :fit_score,
+                score_future = :score_future,
+                score_salary = :score_salary,
+                score_chance = :score_chance,
                 llm_output = :llm_output
             WHERE refnr = :refnr
         """, {
@@ -330,6 +351,9 @@ def update_analysis(db_path: str, refnr: str, result: dict) -> None:
             "tech_stack": json.dumps(result.get("tech_stack")) if result.get("tech_stack") else None,
             "zusammenfassung": result.get("zusammenfassung"),
             "fit_score": result.get("fit_score"),
+            "score_future": result.get("future"),
+            "score_salary": result.get("salary"),
+            "score_chance": result.get("chance"),
             "llm_output": json.dumps(result),
             "refnr": refnr,
         })

@@ -20,10 +20,17 @@ Antworte mit diesem Schema:
     "seniority": "junior | mid | senior | lead | unknown",
     "tech_stack": ["list", "of", "technologies"],
     "zusammenfassung": "2-3 Sätze Zusammenfassung der Stelle",
-    "fit_score": 1
+    "fit_score": 1,
+    "future": 1,
+    "salary": 1,
+    "chance": 1
 }}
 
-Bewerte fit_score (1–5) anhand dieses Kandidatenprofils:
+Bewerte alle vier Scores (jeweils 1–5) anhand dieses Kandidatenprofils:
+- fit_score: Wie gut passt die Stelle zum Profil des Kandidaten?
+- future: Wie zukunftsträchtig ist die Stelle (Wachstum, Technologie, Unternehmen)?
+- salary: Wie attraktiv ist das Gehalts- und Vergütungsniveau (falls erkennbar)?
+- chance: Wie hoch ist die Wahrscheinlichkeit, dass der Kandidat eine Einladung erhält?
 
 {profile_text}
 
@@ -72,4 +79,7 @@ def _stub() -> dict:
         "tech_stack": None,
         "zusammenfassung": None,
         "fit_score": None,
+        "future": None,
+        "salary": None,
+        "chance": None,
     }
