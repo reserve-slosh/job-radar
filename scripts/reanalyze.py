@@ -33,19 +33,21 @@ logger = logging.getLogger(__name__)
 _DEFAULT_LIMIT = 25
 
 
-def _fetch_candidates(db_path: str, limit: int) -> list[dict]:
+def _fetch_candidates(db_path: str, limit: int, profile: str | None = None) -> list[dict]:
+    query = """
+        SELECT refnr, titel, arbeitgeber, fit_score, raw_text, search_profile
+        FROM jobs
+        WHERE score_future IS NULL
+          AND fit_score >= 3
+    """
+    params: list = []
+    if profile is not None:
+        query += " AND search_profile = ?"
+        params.append(profile)
+    query += " ORDER BY fit_score DESC, fetched_at DESC LIMIT ?"
+    params.append(limit)
     with get_connection(db_path) as conn:
-        rows = conn.execute(
-            """
-            SELECT refnr, titel, arbeitgeber, fit_score, raw_text, search_profile
-            FROM jobs
-            WHERE score_future IS NULL
-              AND fit_score >= 3
-            ORDER BY fit_score DESC, fetched_at DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        rows = conn.execute(query, params).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -68,8 +70,8 @@ def _resolve_profile(candidates, profile_key: str) -> tuple[str, str]:
     return profile_text, fit_score_context
 
 
-def reanalyze(db_path: str, api_key: str, profiles_dir: str, limit: int, dry_run: bool) -> None:
-    jobs = _fetch_candidates(db_path, limit)
+def reanalyze(db_path: str, api_key: str, profiles_dir: str, limit: int, dry_run: bool, profile: str | None = None) -> None:
+    jobs = _fetch_candidates(db_path, limit, profile)
 
     if not jobs:
         logger.info("No jobs match criteria (score_future IS NULL AND fit_score >= 3).")
@@ -140,6 +142,11 @@ def main() -> None:
         action="store_true",
         help="Show which jobs would be reanalyzed without making any API calls",
     )
+    parser.add_argument(
+        "--profile",
+        default=None,
+        help="Filter by search_profile (e.g. flemming_koeln); default: all profiles",
+    )
     args = parser.parse_args()
 
     config = Config(db_path=args.db)
@@ -154,6 +161,7 @@ def main() -> None:
         profiles_dir=config.profiles_dir,
         limit=args.limit,
         dry_run=args.dry_run,
+        profile=args.profile,
     )
 
 
