@@ -101,6 +101,11 @@ def _load_jobs(db_path: str, filters: dict) -> list[dict]:
             query += f" AND bewerbung_status IN ({placeholders})"
             params.extend(filters["bewerbung_status"])
 
+    if filters.get("job_status"):
+        placeholders = ",".join("?" * len(filters["job_status"]))
+        query += f" AND job_status IN ({placeholders})"
+        params.extend(filters["job_status"])
+
     if filters.get("duplicate_of") == "hide":
         query += " AND duplicate_of IS NULL"
 
@@ -159,6 +164,9 @@ def _render_jobs_tab(config: Config) -> None:
         remote_opts = ["remote", "hybrid", "onsite", "unknown"]
         selected_remote = st.multiselect("Remote", remote_opts, default=remote_opts)
 
+        job_status_opts = ["active", "presumably_filled"]
+        selected_job_status = st.multiselect("Job Status", job_status_opts, default=["active"])
+
         status_opts = {"Offen": "null", "Entwurf": "entwurf", "Abgeschickt": "abgeschickt"}
         selected_status_labels = st.multiselect(
             "Bewerbungsstatus", list(status_opts.keys()), default=list(status_opts.keys())
@@ -177,6 +185,7 @@ def _render_jobs_tab(config: Config) -> None:
         "seniority": selected_seniority,
         "remote": selected_remote,
         "bewerbung_status": selected_status,
+        "job_status": selected_job_status,
         "duplicate_of": "hide" if hide_duplicates else None,
     }
 
